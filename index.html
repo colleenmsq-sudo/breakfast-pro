@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breakfast Pro · v13 — Hotel F&B Operations</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ============================================================
+   MINIMAL UTILITY CSS — replaces Tailwind CDN
+   Only the classes actually used in this page
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Layout */
+.max-w-7xl { max-width: 80rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.w-full { width: 100%; }
+.w-32 { width: 8rem; }
+.h-px { height: 1px; }
+.h-28 { height: 7rem; }
+.flex-1 { flex: 1 1 0%; }
+.flex-shrink-0 { flex-shrink: 0; }
+
+/* Display */
+.flex { display: flex; }
+.grid { display: grid; }
+.inline-block { display: inline-block; }
+.hidden { display: none; }
+.block { display: block; }
+
+/* Flex */
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-end { align-items: flex-end; }
+.items-baseline { align-items: baseline; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-8 { gap: 2rem; }
+.gap-12 { gap: 3rem; }
+
+/* Grid */
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.col-span-3 { grid-column: span 3 / span 3; }
+.col-span-4 { grid-column: span 4 / span 4; }
+.col-span-5 { grid-column: span 5 / span 5; }
+.col-span-6 { grid-column: span 6 / span 6; }
+.col-span-12 { grid-column: span 12 / span 12; }
+
+/* Spacing */
+.p-1 { padding: 0.25rem; }
+.p-3 { padding: 0.75rem; }
+.p-6 { padding: 1.5rem; }
+.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.pt-2 { padding-top: 0.5rem; }
+.pt-4 { padding-top: 1rem; }
+.pt-8 { padding-top: 2rem; }
+.pb-4 { padding-bottom: 1rem; }
+.pb-6 { padding-bottom: 1.5rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-8 { margin-bottom: 2rem; }
+.mb-12 { margin-bottom: 3rem; }
+.mt-0\.5 { margin-top: 0.125rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-5 { margin-top: 1.25rem; }
+.mt-8 { margin-top: 2rem; }
+.mt-12 { margin-top: 3rem; }
+.mt-16 { margin-top: 4rem; }
+.my-8 { margin-top: 2rem; margin-bottom: 2rem; }
+
+/* Text */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-\[10px\] { font-size: 10px; }
+.text-\[11px\] { font-size: 11px; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.font-black { font-weight: 900; }
+.italic { font-style: italic; }
+.uppercase { text-transform: uppercase; }
+.tracking-tight { letter-spacing: -0.025em; }
+.tracking-tighter { letter-spacing: -0.05em; }
+.tracking-widest { letter-spacing: 0.1em; }
+
+/* Borders */
+.border-t { border-top-width: 1px; border-top-style: solid; }
+.border-black { border-color: #000; }
+
+/* Misc */
+.relative { position: relative; }
+.transition-opacity { transition-property: opacity; transition-duration: 150ms; }
+.transition-colors { transition-property: color, background-color, border-color; transition-duration: 150ms; }
+
+/* Hover (only kept ones used) */
+.hover\:text-red-700:hover { color: #b91c1c; }
+
+/* Responsive — md breakpoint */
+@media (min-width: 768px) {
+  .md\:flex-row { flex-direction: row; }
+  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md\:col-span-2 { grid-column: span 2 / span 2; }
+  .md\:col-span-3 { grid-column: span 3 / span 3; }
+  .md\:col-span-4 { grid-column: span 4 / span 4; }
+  .md\:col-span-5 { grid-column: span 5 / span 5; }
+}
+
+/* Print utility */
+.print\:block { display: none; }
+@media print {
+  .print\:block { display: block; }
+}
+</style>
+<!-- System fonts first (zero load time), then Inter as enhancement -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #111;
+    --ink-2: #333;
+    --paper: #fafaf7;
+    --paper-2: #f0eee7;
+    --rule: #d4d0c4;
+    --muted: #8a8578;
+    --accent: #b8541a;
+    --accent-soft: #f0e0cc;
+    --sharer-blue: #2563b8;     /* "with" / sharer color */
+    --sharer-blue-print: #2563b8;
+    --green: #3d6b3d;
+    --gold: #a17e2c;
+    --red: #8b2e2e;
+  }
+
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    box-sizing: border-box;
+  }
+
+  /* ============================================================
+     SINGLE FONT SYSTEM
+     One family (Inter) everywhere. Hierarchy = size + weight only.
+     Tabular-nums on globally so digits always align in tables.
+     ============================================================ */
+  /* Font stack: system fonts first (instant), Inter as progressive enhancement */
+  html, body, input, textarea, button, select, table, th, td, h1, h2, h3, h4, h5, h6, p, span, div, label, a {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, 'Helvetica Neue', Arial, sans-serif;
+    font-feature-settings: 'tnum' 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ============================================================
+     TYPE SCALE  — every font-size declared once, used consistently
+     ============================================================ */
+  .t-mega    { font-size: 56px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+  .t-h1      { font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+  .t-h2      { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+  .t-h3      { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+  .t-body    { font-size: 13px; font-weight: 500; line-height: 1.5; }
+  .t-small   { font-size: 12px; font-weight: 500; line-height: 1.4; }
+  .t-xs      { font-size: 11px; font-weight: 500; line-height: 1.4; }
+  .t-label   { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+  .t-caption { font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+  /* Decorative rule */
+  .deco-rule {
+    background: repeating-linear-gradient(90deg, var(--ink) 0 6px, transparent 6px 10px);
+    height: 1.5px;
+  }
+
+  /* ============================================================
+     INTRO / INSTRUCTION CARD
+     ============================================================ */
+  .intro-card {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .intro-card h3 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+    color: var(--ink);
+  }
+  .intro-card p {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin-bottom: 8px;
+  }
+  .intro-card .tip {
+    background: var(--paper-2);
+    border-left: 2px solid var(--accent);
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 11.5px;
+    line-height: 1.55;
+  }
+  .intro-card code {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .intro-card details {
+    margin-top: 10px;
+    border-top: 1px solid var(--rule);
+    padding-top: 10px;
+  }
+  .intro-card summary {
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    user-select: none;
+  }
+  .intro-card summary:hover { text-decoration: underline; }
+  .step-list {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+  }
+  .step-list li {
+    counter-increment: step;
+    position: relative;
+    padding: 6px 0 6px 32px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+  .step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0; top: 6px;
+    width: 22px; height: 22px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* ============================================================
+     INPUTS
+     ============================================================ */
+  textarea, input[type=date], input[type=text] {
+    background: #fff;
+    border: 1px solid var(--rule);
+    transition: all .15s ease;
+    font-size: 12px;
+    color: var(--ink);
+  }
+  textarea:focus, input:focus {
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px rgba(184,84,26,0.12);
+  }
+  textarea {
+    line-height: 1.55;
+    padding: 10px 12px;
+    resize: vertical;
+  }
+
+  .remarks-input, .extra-notes-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    color: var(--ink-2);
+    padding: 4px 2px;
+    outline: none;
+    font-style: italic;
+  }
+  .remarks-input::placeholder, .extra-notes-input::placeholder {
+    color: #c4bfb0;
+    font-style: italic;
+  }
+  .remarks-input:focus, .extra-notes-input:focus {
+    background: #fffbe6;
+    border-radius: 2px;
+  }
+
+  /* ============================================================
+     STATUS PILLS
+     ============================================================ */
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: #fff;
+    color: var(--muted);
+  }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .pill.ok .dot { background: var(--green); }
+  .pill.ok { border-color: var(--green); color: var(--green); }
+  .pill.err .dot { background: var(--red); }
+  .pill.err { border-color: var(--red); color: var(--red); }
+
+  /* ============================================================
+     BUTTONS
+     ============================================================ */
+  .btn {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all .15s ease;
+    border: 1px solid var(--ink);
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .btn-primary:disabled { opacity: 0.25; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--ink); }
+  .btn-ghost:hover { background: var(--ink); color: var(--paper); }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+
+  /* ============================================================
+     REPORT TABLE — clean and structured
+     ============================================================ */
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    table-layout: fixed;
+  }
+  .report-table thead th {
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 11px 12px;
+    text-align: left;
+    border-right: 1px solid var(--ink-2);
+    vertical-align: middle;
+  }
+  .report-table thead th:last-child { border-right: 0; }
+  .report-table thead th.center { text-align: center; }
+
+  .report-table tbody td {
+    border-bottom: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+    padding: 10px 12px;
+    vertical-align: middle;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .report-table tbody td:last-child { border-right: 0; }
+  .report-table tbody tr:nth-child(even) { background: rgba(240,238,231,0.5); }
+  .report-table tbody tr:hover { background: var(--paper-2); }
+
+  /* Cell-specific sizes (using only weight + size — same family) */
+  .room-cell {
+    font-size: 20px;
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: -0.02em;
+  }
+  .name-cell {
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.005em;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  /* "with" sharer marker - light blue */
+  .name-cell .with-marker {
+    color: var(--sharer-blue);
+    font-weight: 500;
+    font-style: italic;
+  }
+  .name-cell .sharer-name {
+    color: var(--sharer-blue);
+    font-weight: 600;
+  }
+  .pax-cell {
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .pax-cell .pax-letter {
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.55;
+    margin-left: 1px;
+  }
+  .pax-cell .child {
+    color: var(--accent);
+    font-size: 16px;
+    margin-left: 6px;
+  }
+  .sr-cell {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    font-weight: 500;
+  }
+  .company-cell {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .time-cell {
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .status-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border: 1px solid var(--rule);
+    color: var(--muted);
+    margin-left: 4px;
+    line-height: 1.4;
+    vertical-align: 2px;
+  }
+  .status-tag.confirmed { color: var(--green); border-color: var(--green); }
+  .status-tag.tentative { color: var(--gold); border-color: var(--gold); }
+  .status-tag.dayuse {
+    color: #fff; border-color: var(--accent);
+    background: var(--accent);
+  }
+  /* Reservation = single-letter "R" compact badge */
+  .status-tag.reservation {
+    min-width: 16px;
+    text-align: center;
+    font-weight: 800;
+    padding: 1px 5px;
+    color: var(--ink);
+    border-color: var(--ink);
+    letter-spacing: 0;
+  }
+
+  .vip-mark {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    padding: 2px 6px;
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+
+  /* ============================================================
+     STAT TILES
+     ============================================================ */
+  .stat-tile {
+    background: #fff;
+    border: 1px solid var(--rule);
+    padding: 18px 20px;
+  }
+  .stat-tile.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .stat-tile.accent { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .stat-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.65;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+  .stat-value.medium {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .stat-sub {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-top: 6px;
+  }
+
+  /* ============================================================
+     FORECAST GRID — Clean black & white, evenly spaced
+     ============================================================ */
+  .forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 0;
+    border: 1px solid var(--ink);
+    background: #fff;
+  }
+  .forecast-day {
+    border-right: 1px solid var(--rule);
+    padding: 0;
+    text-align: center;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  .forecast-day:last-child { border-right: none; }
+  .forecast-day.service-date {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .fc-date-row {
+    background: var(--paper-2);
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .forecast-day.service-date .fc-date-row {
+    background: #000;
+    border-bottom-color: #444;
+  }
+  .fc-dow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+  }
+  .forecast-day.service-date .fc-dow { color: rgba(255,255,255,0.6); }
+  .fc-md {
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 2px;
+    letter-spacing: -0.005em;
+  }
+
+  .fc-num-row {
+    padding: 14px 4px 6px 4px;
+  }
+  .fc-num {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+  .fc-num-pax {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .forecast-day.service-date .fc-num-pax { color: rgba(255,255,255,0.6); }
+
+  .fc-detail-row {
+    padding: 6px 4px 10px 4px;
+    border-top: 1px dashed var(--rule);
+    margin: 0 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--ink-2);
+  }
+  .forecast-day.service-date .fc-detail-row {
+    border-top-color: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.85);
+  }
+  .fc-detail-row .fc-d-item { display: inline-block; margin: 0 4px; }
+  .fc-detail-row .fc-d-num { font-weight: 800; }
+  .fc-detail-row .fc-d-label { font-size: 9px; opacity: 0.6; margin-left: 1px; }
+
+  .fc-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* ============================================================
+     EXTRA NOTES BOX (print-only by default, also visible on screen)
+     ============================================================ */
+  .extra-notes-box {
+    border: 1.5px solid var(--ink);
+    padding: 14px 18px;
+    background: #fff;
+    margin-top: 24px;
+  }
+  .extra-notes-box .label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .extra-notes-textarea {
+    width: 100%;
+    min-height: 80px;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--ink);
+    outline: none;
+    resize: vertical;
+    padding: 0;
+    font-style: italic;
+  }
+  /* Lined paper effect for handwriting space */
+  .extra-notes-lines {
+    margin-top: 8px;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 23px,
+      var(--rule) 23px,
+      var(--rule) 24px
+    );
+    min-height: 96px;
+    padding-top: 1px;
+  }
+
+  /* ============================================================
+     TOAST
+     ============================================================ */
+  #toast {
+    position: fixed; top: 20px; right: 20px;
+    background: var(--ink); color: var(--paper);
+    padding: 12px 18px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    transform: translateX(120%);
+    transition: transform .25s ease;
+    z-index: 100;
+    border-left: 3px solid var(--accent);
+  }
+  #toast.show { transform: translateX(0); }
+  #toast.error { border-left-color: var(--red); }
+  #toast.success { border-left-color: var(--green); }
+
+  /* ============================================================
+     EMPTY STATE
+     ============================================================ */
+  .empty-state {
+    padding: 70px 20px;
+    text-align: center;
+  }
+  .empty-state .empty-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: -0.01em;
+  }
+  .empty-state .empty-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  /* ============================================================
+     KEYBOARD HINT
+     ============================================================ */
+  .kbd {
+    display: inline-block;
+    border: 1px solid var(--rule);
+    background: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink-2);
+    box-shadow: 0 1px 0 var(--rule);
+    margin: 0 1px;
+  }
+
+  /* ============================================================
+     PRINT — Clean, simple, single-page
+     Designed from scratch: black & white grid, no decorations,
+     50 rooms + 7-day forecast (from service date) + notes + sign-off
+     ============================================================ */
+  @media print {
+    @page { size: A4; margin: 8mm; }
+
+    /* ---- Reset everything to plain black & white ---- */
+    body {
+      background: #fff !important;
+      background-image: none !important;
+      color: #000 !important;
+      font-family: 'Inter', system-ui, sans-serif !important;
+      font-size: 8pt;
+      line-height: 1.25;
+    }
+
+    .no-print { display: none !important; }
+
+    .report-area {
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      opacity: 1 !important;
+    }
+
+    * {
+      color: #000 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+
+    /* ============================================================
+       1.  HEADER  — Title left, date+counts right, single line
+       ============================================================ */
+    .report-area > div:first-child {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: baseline !important;
+      padding: 0 0 4pt 0 !important;
+      margin: 0 0 6pt 0 !important;
+      border-bottom: 1pt solid #000 !important;
+      text-align: left !important;
+    }
+    /* Hide caption "DAILY OPERATIONS BRIEF" + decorative rule */
+    .report-area > div:first-child > div:first-child,
+    .report-area > div:first-child > .deco-rule {
+      display: none !important;
+    }
+    .t-mega {
+      font-size: 14pt !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.02em !important;
+      line-height: 1 !important;
+      margin: 0 !important;
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       2.  SUMMARY STRIP  — Service date + counts in one row
+       ============================================================ */
+    .report-area > .grid {
+      display: flex !important;
+      gap: 0 !important;
+      margin: 0 0 6pt 0 !important;
+      border: 0.6pt solid #000 !important;
+      page-break-inside: avoid;
+    }
+    .stat-tile {
+      flex: 1 !important;
+      padding: 3pt 8pt !important;
+      border: none !important;
+      border-right: 0.4pt solid #000 !important;
+      background: #fff !important;
+      color: #000 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      align-items: flex-start !important;
+      min-height: 0 !important;
+    }
+    .stat-tile:last-child { border-right: none !important; }
+    .stat-tile.dark, .stat-tile.accent {
+      background: #fff !important;
+      color: #000 !important;
+    }
+    .stat-tile.dark { flex: 2 !important; }
+    .stat-label {
+      font-size: 6pt !important;
+      letter-spacing: 0.12em !important;
+      margin: 0 0 1pt 0 !important;
+      opacity: 1 !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+    }
+    .stat-value {
+      font-size: 13pt !important;
+      line-height: 1 !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.02em !important;
+      margin: 0 !important;
+    }
+    .stat-value.medium {
+      font-size: 9pt !important;
+      font-weight: 700 !important;
+      font-style: normal !important;
+    }
+    .stat-sub { display: none !important; }
+
+    /* ============================================================
+       3.  SECTION HEADERS  — Roman numeral + title + thin rule
+       ============================================================ */
+    .report-area h3.t-label,
+    .report-area .t-h3 {
+      font-size: 7.5pt !important;
+      letter-spacing: 0.15em !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      margin: 0 !important;
+    }
+    .report-area .flex.items-baseline {
+      margin: 0 0 2pt 0 !important;
+      gap: 5pt !important;
+      align-items: baseline !important;
+    }
+    .report-area .flex.items-baseline > div.flex-1 {
+      background: #000 !important;
+      height: 0.4pt !important;
+      align-self: center !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    /* Hide "X OF Y ENTRIES" and "PEAK · ..." right-side counters on print */
+    #rosterCount, #forecastPeak {
+      display: none !important;
+    }
+
+    /* ============================================================
+       4.  ROSTER TABLE  — The main content
+       ============================================================ */
+    .report-table {
+      table-layout: fixed !important;
+      border-collapse: collapse !important;
+      width: 100% !important;
+      margin: 0 !important;
+    }
+    .report-table thead th {
+      background: #000 !important;
+      color: #fff !important;
+      border: 0.4pt solid #000 !important;
+      font-size: 7pt !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.12em !important;
+      padding: 3pt 5pt !important;
+      text-transform: uppercase !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .report-table tbody td {
+      border: 0.3pt solid #000 !important;
+      padding: 1.5pt 5pt !important;
+      font-size: 8pt !important;
+      line-height: 1.2 !important;
+      vertical-align: middle !important;
+      page-break-inside: avoid;
+    }
+    .report-table tbody tr {
+      page-break-inside: avoid;
+    }
+    .report-table tbody tr:nth-child(even) {
+      background: #f2f2f2 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .sr-cell {
+      font-size: 7pt !important;
+      padding: 1.5pt 2pt !important;
+      text-align: center !important;
+      color: #000 !important;
+    }
+    .room-cell {
+      font-size: 11pt !important;
+      font-weight: 800 !important;
+      padding: 1.5pt 4pt !important;
+      letter-spacing: -0.01em !important;
+      text-align: center !important;
+    }
+    .name-cell {
+      font-size: 9pt !important;
+      font-weight: 600 !important;
+      line-height: 1.15 !important;
+    }
+    .name-cell .with-marker,
+    .name-cell .sharer-name {
+      color: #2563b8 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .pax-cell {
+      font-size: 10pt !important;
+      font-weight: 700 !important;
+      padding: 1.5pt 4pt !important;
+      text-align: center !important;
+    }
+    .pax-cell .pax-letter {
+      font-size: 6.5pt !important;
+      font-weight: 500 !important;
+    }
+    .pax-cell .child {
+      color: #000 !important;
+      font-size: 9pt !important;
+      margin-left: 3pt !important;
+    }
+    .pax-cell > div { display: none !important; }
+
+    .time-cell {
+      font-size: 7.5pt !important;
+      text-align: center !important;
+    }
+
+    /* Status badges — minimal */
+    .status-tag {
+      display: inline-block !important;
+      font-size: 5.5pt !important;
+      padding: 0 3pt !important;
+      border: 0.3pt solid #000 !important;
+      margin: 0 0 0 3pt !important;
+      letter-spacing: 0.05em !important;
+      background: #fff !important;
+      color: #000 !important;
+      vertical-align: 1pt !important;
+      line-height: 1.2 !important;
+      font-weight: 600 !important;
+      text-transform: uppercase !important;
+    }
+    .status-tag.dayuse {
+      background: #000 !important;
+      color: #fff !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .status-tag.reservation {
+      min-width: 0 !important;
+      padding: 0 3pt !important;
+    }
+    .name-cell + div { display: inline !important; }
+
+    .vip-mark {
+      display: inline-block !important;
+      background: #000 !important;
+      color: #fff !important;
+      font-size: 5.5pt !important;
+      padding: 0 3pt !important;
+      margin-right: 3pt !important;
+      letter-spacing: 0.1em !important;
+      vertical-align: 1pt !important;
+      font-weight: 700 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Remarks — clean writable line */
+    .remarks-input {
+      border: none !important;
+      background: transparent !important;
+      color: #000 !important;
+      font-size: 8pt !important;
+      font-style: normal !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+    .remarks-cell {
+      padding: 1.5pt 5pt !important;
+    }
+    .remarks-cell.empty::after {
+      content: '';
+      display: block;
+      border-bottom: 0.3pt solid #888;
+      margin-top: 1pt;
+      height: 0;
+    }
+
+    /* Section spacing */
+    .report-area > .mb-12,
+    .report-area > .mb-8 {
+      margin-bottom: 5pt !important;
+    }
+
+    /* ============================================================
+       5.  7-DAY FORECAST  — Clean grid, service date highlighted
+       ============================================================ */
+    .forecast-section {
+      margin-bottom: 5pt !important;
+      page-break-inside: avoid;
+    }
+    .forecast-grid {
+      display: grid !important;
+      grid-template-columns: repeat(7, 1fr) !important;
+      gap: 0 !important;
+      border: 0.6pt solid #000 !important;
+      background: #fff !important;
+    }
+    .forecast-day {
+      border-right: 0.3pt solid #000 !important;
+      background: #fff !important;
+      color: #000 !important;
+      padding: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .forecast-day:last-child {
+      border-right: none !important;
+    }
+    .forecast-day.service-date {
+      background: #000 !important;
+      color: #fff !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .forecast-day.service-date * {
+      color: #fff !important;
+    }
+
+    .fc-date-row {
+      background: transparent !important;
+      padding: 2pt 2pt !important;
+      border-bottom: 0.3pt solid #000 !important;
+      text-align: center !important;
+    }
+    .forecast-day.service-date .fc-date-row {
+      border-bottom: 0.3pt solid #fff !important;
+    }
+    .fc-dow {
+      font-size: 6pt !important;
+      letter-spacing: 0.15em !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      opacity: 1 !important;
+    }
+    .fc-md {
+      font-size: 7.5pt !important;
+      font-weight: 700 !important;
+      margin-top: 0.5pt !important;
+      letter-spacing: -0.005em !important;
+    }
+
+    .fc-num-row {
+      padding: 4pt 2pt 2pt 2pt !important;
+      text-align: center !important;
+    }
+    .fc-num {
+      font-size: 14pt !important;
+      font-weight: 800 !important;
+      line-height: 1 !important;
+      letter-spacing: -0.03em !important;
+    }
+    .fc-num-pax {
+      font-size: 5pt !important;
+      letter-spacing: 0.12em !important;
+      margin-top: 1pt !important;
+      font-weight: 600 !important;
+      text-transform: uppercase !important;
+      opacity: 1 !important;
+    }
+
+    .fc-detail-row {
+      padding: 1.5pt 2pt 3pt 2pt !important;
+      margin: 0 !important;
+      border-top: none !important;
+      text-align: center !important;
+      font-size: 6pt !important;
+      letter-spacing: 0.04em !important;
+      font-weight: 600 !important;
+    }
+    .fc-detail-row .fc-d-item {
+      display: inline-block !important;
+      margin: 0 2pt !important;
+    }
+    .fc-detail-row .fc-d-num {
+      font-weight: 800 !important;
+    }
+    .fc-detail-row .fc-d-label {
+      font-size: 5pt !important;
+      opacity: 1 !important;
+      margin-left: 0.5pt !important;
+      font-weight: 600 !important;
+    }
+
+    .fc-empty {
+      padding: 8pt !important;
+      font-size: 7pt !important;
+      letter-spacing: 0.12em !important;
+      text-align: center !important;
+      color: #000 !important;
+      font-weight: 600 !important;
+    }
+
+    /* ============================================================
+       6.  EXTRA NOTES BOX
+       ============================================================ */
+    .extra-notes-box {
+      border: 0.5pt solid #000 !important;
+      padding: 4pt 6pt !important;
+      margin-top: 5pt !important;
+      page-break-inside: avoid;
+    }
+    .extra-notes-box .label-row {
+      margin-bottom: 2pt !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: baseline !important;
+    }
+    .extra-notes-box h3 {
+      font-size: 7pt !important;
+      letter-spacing: 0.12em !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+    }
+    .extra-notes-box .t-xs {
+      font-size: 5.5pt !important;
+      letter-spacing: 0.08em !important;
+      color: #555 !important;
+    }
+    .extra-notes-lines {
+      min-height: 28pt !important;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 12pt,
+        #aaa 12pt,
+        #aaa 12.3pt
+      ) !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .extra-notes-textarea {
+      font-size: 8pt !important;
+      line-height: 1.6 !important;
+      font-style: normal !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* ============================================================
+       7.  SIGNATURE BLOCK
+       ============================================================ */
+    .signature-block {
+      margin-top: 6pt !important;
+      padding-top: 3pt !important;
+      gap: 12pt !important;
+      page-break-inside: avoid;
+      border-top: 0.4pt solid #000 !important;
+      display: grid !important;
+      grid-template-columns: 1fr 1fr 1fr !important;
+    }
+    .signature-block .t-caption {
+      font-size: 6pt !important;
+      letter-spacing: 0.12em !important;
+      margin-bottom: 14pt !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+    }
+    .signature-block .border-t {
+      border-color: #000 !important;
+      border-top-width: 0.4pt !important;
+      padding-top: 1.5pt !important;
+    }
+    .signature-block .t-xs {
+      font-size: 5.5pt !important;
+      letter-spacing: 0.1em !important;
+      font-weight: 600 !important;
+      text-transform: uppercase !important;
+    }
+
+    /* ============================================================
+       8.  FOOTER
+       ============================================================ */
+    .report-area > div:last-child {
+      margin-top: 3pt !important;
+      padding-top: 2pt !important;
+      font-size: 5.5pt !important;
+      border-top: 0.3pt solid #000 !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      letter-spacing: 0.08em !important;
+    }
+    .report-area > div:last-child * {
+      font-size: 5.5pt !important;
+      font-weight: 600 !important;
+    }
+
+    .report-area {
+      page-break-inside: auto;
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Hidden by default; shown if any JS error occurs -->
+<div id="errorBar" class="no-print" style="display:none; position:fixed; top:0; left:0; right:0; background:#b91c1c; color:#fff; padding:8px 16px; font-size:12px; font-weight:600; z-index:1000; text-align:center;"></div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ============== CONTROL PANEL ============== -->
+<div class="no-print">
+  <div class="max-w-7xl mx-auto px-6 pt-8 pb-6">
+
+    <!-- HEADER -->
+    <div class="flex items-end justify-between mb-2 flex-wrap gap-3">
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <span class="t-caption" style="color: var(--accent);">VOL. XIII</span>
+          <span class="t-caption">— F&B OPS UTILITY</span>
+        </div>
+        <h1 class="t-h1">
+          Breakfast<span style="color: var(--accent);">.</span>Pro
+        </h1>
+      </div>
+      <div class="text-right">
+        <div class="t-caption">HOTEL F&B OPERATIONS</div>
+        <div class="t-xs font-semibold mt-0.5" style="color: var(--ink-2);" id="liveClock">—</div>
+      </div>
+    </div>
+    <div class="deco-rule mb-6"></div>
+
+    <!-- INTRO / INSTRUCTIONS -->
+    <div class="intro-card">
+      <h3>How this works</h3>
+      <p>
+        Paste two PMS exports below. The tool figures out who's eligible for breakfast on the selected
+        service date — the morning <em>after</em> check-in through the morning <em>of</em> check-out,
+        plus any day-use bookings.
+      </p>
+
+      <ol class="step-list">
+        <li>
+          <strong>Source A — Check-in/out Report:</strong> start date must be earlier than your
+          earliest in-house guest's check-in. For long-stay guests, push back several months.
+        </li>
+        <li>
+          <strong>Source B — Reservation Report:</strong> cover roughly 14 days before to 14 days
+          after today.
+        </li>
+        <li>
+          Pick a service date, review, type any per-room remarks, then print or export.
+        </li>
+      </ol>
+
+      <div class="tip" style="border-left-color: var(--red); background: #fdf3f3;">
+        <strong style="color: var(--red);">⚠ Accuracy:</strong> Numbers come straight from the PMS.
+        Front office must enter the <strong>actual</strong> adult/child count for every booking.
+        If a count is wrong, fix it in the PMS — not on the printout. Accurate occupancy data feeds
+        room revenue, housekeeping, statistics, and audit. The breakfast list is the symptom; PMS
+        hygiene is the cure.
+      </div>
+      <div class="tip" style="border-left-color: var(--green); background: #f3f8f3;">
+        <strong style="color: var(--green);">✓ No archiving needed:</strong> Generate, use, discard.
+        The PMS is the single source of truth — as long as you keep up with daily PMS backups,
+        any past day's list can be regenerated on demand. Don't save printouts or PDFs.
+        Pull live, use live, throw away.
+      </div>
+    </div>
+
+    <!-- TOP CONTROLS -->
+    <div class="grid grid-cols-12 gap-4 mb-6">
+      <div class="col-span-12 md:col-span-3">
+        <label class="block t-caption mb-2">Service Date</label>
+        <input type="date" id="targetDate" class="w-full px-3 py-2 font-semibold text-sm">
+        <div class="flex gap-2 mt-2">
+          <button class="quick-date btn btn-ghost text-[10px] px-2 py-1" data-offset="0">Today</button>
+          <button class="quick-date btn btn-ghost text-[10px] px-2 py-1" data-offset="1">Tomorrow</button>
+          <button class="quick-date btn btn-ghost text-[10px] px-2 py-1" data-offset="2">+2d</button>
+        </div>
+      </div>
+      <div class="col-span-12 md:col-span-5">
+        <label class="block t-caption mb-2">Search Filter</label>
+        <input type="text" id="searchBox" placeholder="Filter by room, guest name, or company…" class="w-full px-3 py-2 text-sm">
+        <div class="t-xs mt-2 flex flex-wrap gap-2 items-center" style="color: var(--muted);">
+          <span>Shortcuts:</span>
+          <span><span class="kbd" id="kbdMod">Ctrl</span>+<span class="kbd">K</span> search</span>
+          <span><span class="kbd" id="kbdMod2">Ctrl</span>+<span class="kbd">P</span> print</span>
+          <span><span class="kbd" id="kbdMod3">Ctrl</span>+<span class="kbd">E</span> export</span>
+        </div>
+      </div>
+      <div class="col-span-12 md:col-span-4 flex items-end gap-2">
+        <button id="exportBtn" class="btn btn-ghost flex-1 py-2.5" disabled>Export · XLSX</button>
+        <button id="printBtn" class="btn btn-primary flex-1 py-2.5">Print Report</button>
+      </div>
+    </div>
+
+    <!-- DATA INPUTS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div>
+        <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+          <label class="t-caption">
+            <span style="color: var(--green);">●</span> Source A — Check-in / Check-out Report
+          </label>
+          <span id="inHouseStatus" class="pill"><span class="dot"></span>Empty</span>
+        </div>
+        <textarea id="inputInHouse" class="w-full h-28" placeholder="Paste tab-separated data from your Check-in / Check-out report here…&#10;&#10;Date range tip: start date must be earlier than the earliest guest in-house check-in date. For long-stay guests, go back several months."></textarea>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+          <label class="t-caption">
+            <span style="color: var(--accent);">●</span> Source B — Reservation Report
+          </label>
+          <span id="bookingStatus" class="pill"><span class="dot"></span>Empty</span>
+        </div>
+        <textarea id="inputRes" class="w-full h-28" placeholder="Paste tab-separated data from your Reservation Report here…&#10;&#10;Date range tip: cover roughly 14 days before to 14 days after today, so the 7-day forecast has enough data."></textarea>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center t-xs flex-wrap gap-2" style="color: var(--muted);">
+      <span>LAST SYNC · <span id="lastSync" style="color: var(--ink); font-weight: 600;">—</span></span>
+      <button id="clearAll" class="hover:text-red-700 transition-colors font-bold tracking-widest">CLEAR ALL DATA →</button>
+    </div>
+  </div>
+
+  <div class="deco-rule max-w-7xl mx-auto"></div>
+</div>
+
+<!-- ============== REPORT AREA ============== -->
+<div id="reportArea" class="report-area max-w-7xl mx-auto p-6 transition-opacity" style="opacity: 0.15;">
+
+  <!-- MASTHEAD -->
+  <div class="text-center pt-8 pb-4">
+    <div class="t-caption mb-3" style="letter-spacing: 0.4em;">— DAILY OPERATIONS BRIEF —</div>
+    <h2 class="t-mega">Breakfast Guest List</h2>
+    <div class="deco-rule w-32 mx-auto mt-5"></div>
+  </div>
+
+  <!-- DATE & SUMMARY -->
+  <div class="grid grid-cols-12 gap-3 my-8">
+    <div class="stat-tile col-span-12 md:col-span-4 dark">
+      <div class="stat-label">Service Date</div>
+      <div class="stat-value medium" id="displayDate">—</div>
+      <div class="stat-sub" id="displayDay">—</div>
+    </div>
+    <div class="stat-tile col-span-6 md:col-span-2">
+      <div class="stat-label">Rooms</div>
+      <div class="stat-value" id="sumRooms">0</div>
+      <div class="stat-sub">Occupied</div>
+    </div>
+    <div class="stat-tile col-span-6 md:col-span-2">
+      <div class="stat-label">Adults</div>
+      <div class="stat-value" id="sumAdults">0</div>
+      <div class="stat-sub">Pax</div>
+    </div>
+    <div class="stat-tile col-span-6 md:col-span-2">
+      <div class="stat-label">Children</div>
+      <div class="stat-value" id="sumChildren" style="color: var(--accent);">0</div>
+      <div class="stat-sub">Pax</div>
+    </div>
+    <div class="stat-tile col-span-6 md:col-span-2 accent">
+      <div class="stat-label">Total Pax</div>
+      <div class="stat-value" id="sumTotal">0</div>
+      <div class="stat-sub">For Service</div>
+    </div>
+  </div>
+
+  <!-- GUEST TABLE -->
+  <div class="mb-12">
+    <div class="flex items-baseline gap-3 mb-3">
+      <span class="t-h3" style="font-weight: 800;">I.</span>
+      <h3 class="t-label">Confirmed Guest Roster</h3>
+      <div class="flex-1 h-px" style="background: var(--rule);"></div>
+      <span class="t-xs font-semibold" style="color: var(--muted);" id="rosterCount">0 ENTRIES</span>
+    </div>
+
+    <table class="report-table">
+      <colgroup>
+        <col style="width: 36px">
+        <col style="width: 80px">
+        <col>
+        <col style="width: 75px">
+        <col style="width: 65px">
+        <col style="width: 32%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="center">#</th>
+          <th class="center">Room</th>
+          <th>Guest Name</th>
+          <th class="center">Pax</th>
+          <th class="center">Time</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody id="guestTableBody">
+        <tr><td colspan="6" class="empty-state">
+          <div class="empty-title">Awaiting data sync…</div>
+          <div class="empty-label">Paste source data above to generate roster</div>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 7-DAY FORECAST -->
+  <div id="forecastSection" class="forecast-section mb-8 hidden">
+    <div class="flex items-baseline gap-3 mb-3">
+      <span class="t-h3" style="font-weight: 800;">II.</span>
+      <h3 class="t-label">Seven-Day Quantity Forecast</h3>
+      <div class="flex-1 h-px" style="background: var(--rule);"></div>
+      <span class="t-xs font-semibold" style="color: var(--muted);" id="forecastPeak">PEAK · —</span>
+    </div>
+
+    <div id="forecastGrid" class="forecast-grid"></div>
+  </div>
+
+  <!-- EXTRA NOTES BOX -->
+  <div class="extra-notes-box">
+    <div class="label-row">
+      <h3 class="t-label">III. Extra Notes / Special Instructions</h3>
+      <span class="t-xs" style="color: var(--muted);">For F&B / Kitchen use</span>
+    </div>
+    <textarea id="extraNotes"
+      class="extra-notes-textarea no-print"
+      placeholder="Type allergies, VIP arrangements, set-up changes, banquet overlap, staffing notes…"></textarea>
+    <!-- Lined area visible only on print (so kitchen can write by hand) -->
+    <div class="extra-notes-lines hidden print:block" id="extraNotesPrint"></div>
+  </div>
+
+  <!-- SIGNATURE BLOCK -->
+  <div class="signature-block grid grid-cols-3 gap-8 mt-12 pt-8" style="border-top: 1px solid var(--rule);">
+    <div>
+      <div class="t-caption mb-12">Prepared By</div>
+      <div class="border-t border-black pt-2">
+        <div class="t-xs font-semibold tracking-widest">FRONT OFFICE</div>
+      </div>
+    </div>
+    <div>
+      <div class="t-caption mb-12">Received By</div>
+      <div class="border-t border-black pt-2">
+        <div class="t-xs font-semibold tracking-widest">F&B / KITCHEN</div>
+      </div>
+    </div>
+    <div>
+      <div class="t-caption mb-12">Verified By</div>
+      <div class="border-t border-black pt-2">
+        <div class="t-xs font-semibold tracking-widest">DUTY MANAGER</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="flex justify-between items-center mt-8 pt-4 t-xs" style="color: var(--muted); border-top: 1px solid var(--rule);">
+    <span>PRINTED · <span id="printTime" style="color: var(--ink); font-weight: 600;">—</span></span>
+    <span style="font-weight: 700; color: var(--ink); letter-spacing: -0.01em;">Breakfast.Pro</span>
+    <span>VOL. XIII · CONFIDENTIAL</span>
+  </div>
+</div>
+
+<!-- Print-only reveal of lined notes -->
+<style>
+  @media print {
+    #extraNotes { display: none !important; }
+    #extraNotesPrint { display: block !important; }
+  }
+  #extraNotesPrint { display: none; }
+</style>
+
+<script>
+/* ============================================================
+   BREAKFAST PRO v13
+   ============================================================ */
+
+// Global error display — if anything breaks, show it visibly so we know
+window.addEventListener('error', function(e) {
+  const msg = `JS Error: ${e.message} (line ${e.lineno})`;
+  console.error(msg);
+  // Show on screen so user can report it
+  const errBar = document.getElementById('errorBar');
+  if (errBar) {
+    errBar.textContent = msg;
+    errBar.style.display = 'block';
+  }
+});
+
+const $ = (id) => document.getElementById(id);
+
+const els = {
+  inputA: $('inputInHouse'),
+  inputB: $('inputRes'),
+  date: $('targetDate'),
+  search: $('searchBox'),
+  printBtn: $('printBtn'),
+  exportBtn: $('exportBtn'),
+  clearBtn: $('clearAll'),
+  reportArea: $('reportArea'),
+  guestBody: $('guestTableBody'),
+  forecastSection: $('forecastSection'),
+  forecastPeak: $('forecastPeak'),
+  rosterCount: $('rosterCount'),
+  statusA: $('inHouseStatus'),
+  statusB: $('bookingStatus'),
+  liveClock: $('liveClock'),
+  lastSync: $('lastSync'),
+  toast: $('toast'),
+  extraNotes: $('extraNotes'),
+};
+
+/* ----- Cross-platform shortcut label ----- */
+const isMac = /Mac|iPad|iPhone|iPod/.test(navigator.platform || navigator.userAgent);
+const modKey = isMac ? 'Cmd' : 'Ctrl';
+['kbdMod','kbdMod2','kbdMod3'].forEach(id => { const e = $(id); if (e) e.textContent = modKey; });
+
+/* ----- Default date: tomorrow ----- */
+const tmrw = new Date();
+tmrw.setDate(tmrw.getDate() + 1);
+els.date.value = tmrw.toISOString().split('T')[0];
+
+const state = {
+  merged: [],
+  filtered: [],
+  remarks: {},
+  extraNotes: ''
+};
+
+/* Sync extra notes to print mirror */
+els.extraNotes.addEventListener('input', () => {
+  state.extraNotes = els.extraNotes.value;
+  $('extraNotesPrint').textContent = state.extraNotes;
+});
+
+/* ----- Live Clock (updates each minute, not each second) ----- */
+function tickClock() {
+  const d = new Date();
+  els.liveClock.textContent = d.toLocaleString('en-US', {
+    weekday: 'short', hour: '2-digit', minute: '2-digit'
+  }).toUpperCase();
+}
+setInterval(tickClock, 60000); tickClock();
+
+/* ----- Toast ----- */
+function toast(msg, type = '') {
+  els.toast.textContent = msg;
+  els.toast.className = type;
+  requestAnimationFrame(() => els.toast.classList.add('show'));
+  setTimeout(() => els.toast.classList.remove('show'), 2400);
+}
+
+/* ----- Date Parsing ----- */
+function parseFlexDate(val) {
+  if (val === null || val === undefined) return null;
+  let s = val.toString().trim();
+  if (!s) return null;
+  if (/^\d+(\.\d+)?$/.test(s) && parseFloat(s) > 1000 && parseFloat(s) < 100000) {
+    const d = new Date(Math.round((parseFloat(s) - 25569) * 86400 * 1000));
+    d.setHours(0,0,0,0); return d;
+  }
+  let d = new Date(s);
+  if (!isNaN(d.getTime())) { d.setHours(0,0,0,0); return d; }
+  const parts = s.split(/[-/.\s]/).filter(Boolean);
+  if (parts.length >= 3) {
+    let y, m, dd;
+    if (parts[0].length === 4) [y,m,dd] = parts;
+    else if (parts[2].length === 4) [dd,m,y] = parts;
+    else return null;
+    const out = new Date(+y, +m - 1, +dd);
+    out.setHours(0,0,0,0);
+    return isNaN(out.getTime()) ? null : out;
+  }
+  return null;
+}
+
+function findHeaderCol(headers, keys) {
+  for (let i = 0; i < headers.length; i++) {
+    const h = headers[i].toLowerCase();
+    if (keys.some(k => h.includes(k.toLowerCase()))) return i;
+  }
+  return -1;
+}
+
+/* ----- Parse Source ----- */
+function processSource(text, label) {
+  if (!text.trim()) return { rows: [], errors: [] };
+  const lines = text.trim().split('\n').map(r => r.split('\t'));
+  if (lines.length < 2) return { rows: [], errors: ['Need header + 1 row'] };
+  const hdrs = lines[0].map(h => h.trim());
+
+  const cols = {
+    id: findHeaderCol(hdrs, ["booking id", "reservation id", "ref", "confirmation"]),
+    room: findHeaderCol(hdrs, ["room no", "room number", "room", "rm"]),
+    name: findHeaderCol(hdrs, ["guest name", "customer name", "client name", "pax name", "name"]),
+    company: findHeaderCol(hdrs, ["company", "group name", "group", "account", "agent"]),
+    checkin: findHeaderCol(hdrs, ["check-in", "check in", "checkin", "arrival"]),
+    checkout: findHeaderCol(hdrs, ["check-out", "check out", "checkout", "departure"]),
+    adults: findHeaderCol(hdrs, ["number of adult", "no of adult", "adults", "adult"]),
+    children: findHeaderCol(hdrs, ["number of child", "no of child", "children", "child"]),
+    childAge: findHeaderCol(hdrs, ["child age", "kid age", "age"]),
+    status: findHeaderCol(hdrs, ["status", "state", "reservation status"]),
+    vip: findHeaderCol(hdrs, ["vip", "priority"]),
+    rateCode: findHeaderCol(hdrs, ["rate code", "rate plan", "package"]),
+    sharer: findHeaderCol(hdrs, ["sharer", "share with", "with guest", "companion"]),
+  };
+
+  const errors = [];
+  if (cols.checkin === -1 || cols.checkout === -1) {
+    errors.push(`${label}: Missing check-in / check-out column`);
+    return { rows: [], errors };
+  }
+
+  const rows = lines.slice(1).map((r, idx) => {
+    let adults   = parseInt(r[cols.adults])   || 0;
+    let children = cols.children !== -1 ? (parseInt(r[cols.children]) || 0) : 0;
+    if (adults > 100) adults = 0;
+    if (children > 100) children = 0;
+
+    const cin  = parseFlexDate(r[cols.checkin]);
+    const cout = parseFlexDate(r[cols.checkout]);
+    if (!cin || !cout) {
+      errors.push(`${label} row ${idx+2}: bad date`);
+      return null;
+    }
+
+    const status = (r[cols.status] || "").trim().toLowerCase();
+    if (["cancelled","canceled","no-show","no show","void"].includes(status)) return null;
+
+    const isVIP = cols.vip !== -1 && (r[cols.vip] || "").trim().toLowerCase().match(/^(y|yes|true|1|vip)$/);
+
+    return {
+      id: (r[cols.id] || "").trim(),
+      room: (r[cols.room] || "TBA").trim() || "TBA",
+      name: (r[cols.name] || "").trim() || "—",
+      company: cols.company !== -1 ? (r[cols.company] || "").trim() : "",
+      sharer: cols.sharer !== -1 ? (r[cols.sharer] || "").trim() : "",
+      checkin: cin, checkout: cout,
+      adults, children,
+      childAge: cols.childAge !== -1 ? (r[cols.childAge] || "").trim() : "",
+      status,
+      vip: !!isVIP,
+      rateCode: cols.rateCode !== -1 ? (r[cols.rateCode] || "").trim() : "",
+      isDayUse: cin.getTime() === cout.getTime(),
+    };
+  }).filter(Boolean);
+
+  return { rows, errors };
+}
+
+function rowKey(g) {
+  return g.id || `${g.room}|${g.name}|${g.checkin.getTime()}`;
+}
+
+function checkEligibility(targetDate, b) {
+  const t = targetDate.getTime();
+  const ci = b.checkin.getTime();
+  const co = b.checkout.getTime();
+  if (b.isDayUse) return t === ci;
+  return t > ci && t <= co;
+}
+
+function setPill(el, ok, text) {
+  el.className = `pill ${ok ? 'ok' : (text.includes('ERROR') ? 'err' : '')}`;
+  el.innerHTML = `<span class="dot"></span>${text}`;
+}
+
+/* ----- Sharer detection in name field -----
+   Detect patterns like "John Smith with Jane Smith" or "Smith, John / Doe, Jane"
+   Returns HTML with the "with"/sharer portion wrapped in a colored span.
+*/
+function formatGuestName(name, explicitSharer) {
+  let safe = escapeHtml(name);
+  // Pattern 1: "X with Y" or "X w/ Y"
+  const withRx = /\s+(with|w\/|&|and)\s+/i;
+  if (withRx.test(name)) {
+    const parts = name.split(withRx);
+    // parts: [primary, separator, sharer]
+    const primary = escapeHtml(parts[0].trim());
+    const sep = escapeHtml(parts[1].trim());
+    const sharer = escapeHtml(parts.slice(2).join(' ').trim());
+    safe = `${primary} <span class="with-marker">${sep}</span> <span class="sharer-name">${sharer}</span>`;
+  }
+  // Append explicit sharer column if present and not already in name
+  if (explicitSharer && !withRx.test(name)) {
+    safe += ` <span class="with-marker">with</span> <span class="sharer-name">${escapeHtml(explicitSharer)}</span>`;
+  }
+  return safe;
+}
+
+/* ----- Main Engine ----- */
+function runEngine() {
+  const td = new Date(els.date.value); td.setHours(0,0,0,0);
+  if (isNaN(td.getTime())) { toast('Invalid date', 'error'); return; }
+
+  $('displayDate').textContent = td.toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  });
+  $('displayDay').textContent = td.toLocaleDateString('en-US', { weekday: 'long' });
+  $('printTime').textContent = new Date().toLocaleString();
+
+  const A = processSource(els.inputA.value, 'Source A');
+  const B = processSource(els.inputB.value, 'Source B');
+
+  setPill(els.statusA, A.rows.length > 0,
+    A.errors.length ? `${A.errors.length} ERROR` : (A.rows.length ? `${A.rows.length} rows` : 'Empty'));
+  setPill(els.statusB, B.rows.length > 0,
+    B.errors.length ? `${B.errors.length} ERROR` : (B.rows.length ? `${B.rows.length} rows` : 'Empty'));
+
+  if (A.errors.length || B.errors.length) {
+    toast(`Parse warning: ${(A.errors[0]||B.errors[0])}`, 'error');
+  }
+
+  const merged = new Map();
+  B.rows.forEach(b => merged.set(rowKey(b), b));
+  A.rows.forEach(b => merged.set(rowKey(b), b));
+  state.merged = Array.from(merged.values());
+
+  if (state.merged.length === 0) { resetUI(); return; }
+
+  const eligible = state.merged
+    .filter(b => checkEligibility(td, b))
+    .sort((a,b) => a.room.localeCompare(b.room, undefined, { numeric: true }));
+
+  const q = els.search.value.trim().toLowerCase();
+  state.filtered = q ? eligible.filter(b =>
+    b.room.toLowerCase().includes(q) ||
+    b.name.toLowerCase().includes(q) ||
+    b.company.toLowerCase().includes(q)
+  ) : eligible;
+
+  renderRoster(state.filtered, eligible.length);
+  renderForecast(state.merged, td);
+
+  els.lastSync.textContent = new Date().toLocaleTimeString();
+}
+
+/* ----- Roster Render ----- */
+function renderRoster(list, totalEligible) {
+  els.guestBody.innerHTML = '';
+
+  if (list.length === 0) {
+    const msg = totalEligible === 0
+      ? { t: 'No eligible guests', l: 'Nobody to serve breakfast for on this date' }
+      : { t: 'No matches', l: 'Try a different search term' };
+    els.guestBody.innerHTML = `<tr><td colspan="6" class="empty-state">
+      <div class="empty-title">${msg.t}</div>
+      <div class="empty-label">${msg.l}</div>
+    </td></tr>`;
+    updateSummary(0, 0, 0);
+    // printBtn always enabled for compatibility
+    els.exportBtn.disabled = true;
+    els.reportArea.style.opacity = totalEligible === 0 ? '0.15' : '1';
+    els.rosterCount.textContent = '0 ENTRIES';
+    return;
+  }
+
+  let totalA = 0, totalC = 0;
+  // Use DocumentFragment for batch DOM insertion (much faster than appendChild loop)
+  const frag = document.createDocumentFragment();
+
+  list.forEach((g, i) => {
+    totalA += g.adults; totalC += g.children;
+    const tr = document.createElement('tr');
+    const k = rowKey(g);
+    const savedRemark = state.remarks[k] || '';
+
+    const statusCls = g.isDayUse ? 'dayuse'
+      : g.status.includes('confirm') ? 'confirmed'
+      : g.status.includes('tentative') ? 'tentative'
+      : g.status.includes('reservation') ? 'reservation' : '';
+
+    let statusLabel;
+    if (g.isDayUse) statusLabel = 'Day Use';
+    else if (g.status.includes('reservation')) statusLabel = 'R';
+    else statusLabel = g.status;
+
+    tr.innerHTML = `
+      <td class="sr-cell">${i + 1}</td>
+      <td class="room-cell">${escapeHtml(g.room)}</td>
+      <td>
+        <div class="name-cell">${g.vip ? '<span class="vip-mark">VIP</span>' : ''}${formatGuestName(g.name, g.sharer)}${statusLabel ? ` <span class="status-tag ${statusCls}">${escapeHtml(statusLabel)}</span>` : ''}${g.rateCode ? ` <span class="status-tag">${escapeHtml(g.rateCode)}</span>` : ''}</div>
+      </td>
+      <td class="pax-cell">
+        <span>${g.adults}<span class="pax-letter">A</span></span>${g.children > 0 ? `<span class="child">${g.children}<span class="pax-letter" style="opacity:0.7;">C</span></span>` : ''}
+        ${g.childAge ? `<div style="font-size:10px; color: var(--muted); margin-top:2px;">age ${escapeHtml(g.childAge)}</div>` : ''}
+      </td>
+      <td class="time-cell"></td>
+      <td class="remarks-cell ${savedRemark ? '' : 'empty'}">
+        <input type="text" class="remarks-input" data-key="${escapeHtml(k)}"
+               value="${escapeHtml(savedRemark)}"
+               placeholder="—" autocomplete="off" spellcheck="false">
+      </td>
+    `;
+    frag.appendChild(tr);
+  });
+  els.guestBody.appendChild(frag);
+
+  // Bind remark inputs
+  els.guestBody.querySelectorAll('.remarks-input').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const k = e.target.dataset.key;
+      const v = e.target.value;
+      if (v) state.remarks[k] = v; else delete state.remarks[k];
+      const cell = e.target.closest('.remarks-cell');
+      if (cell) cell.classList.toggle('empty', !v);
+    });
+  });
+
+  updateSummary(list.length, totalA, totalC);
+  // printBtn always enabled
+  els.exportBtn.disabled = false;
+  els.reportArea.style.opacity = '1';
+  els.rosterCount.textContent = `${list.length} OF ${totalEligible} ENTRIES`;
+}
+
+function updateSummary(rooms, a, c) {
+  $('sumRooms').textContent = rooms;
+  $('sumAdults').textContent = a;
+  $('sumChildren').textContent = c;
+  $('sumTotal').textContent = a + c;
+}
+
+/* ----- Forecast Render ----- */
+function renderForecast(all, baseDate) {
+  els.forecastSection.classList.remove('hidden');
+  const grid = $('forecastGrid');
+  grid.innerHTML = '';
+
+  // Compute exactly 7 days starting from service date
+  const days = [];
+  let maxPax = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(baseDate); d.setDate(d.getDate() + i);
+    let a = 0, c = 0, r = 0;
+    all.forEach(b => {
+      if (checkEligibility(d, b)) { a += b.adults; c += b.children; r++; }
+    });
+    days.push({ d, a, c, r, t: a + c });
+    if (a + c > maxPax) maxPax = a + c;
+  }
+
+  // Update peak label
+  if (maxPax > 0) {
+    const peakDay = days.reduce((a, b) => b.t > a.t ? b : a);
+    els.forecastPeak.textContent =
+      `PEAK · ${peakDay.d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }).toUpperCase()} · ${maxPax} PAX`;
+  } else {
+    els.forecastPeak.textContent = 'PEAK · —';
+  }
+
+  // Always show all 7 days from service date — empty days show 0
+  grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+
+  days.forEach((day, i) => {
+    const isServiceDate = i === 0;
+    const cls = ['forecast-day'];
+    if (isServiceDate) cls.push('service-date');
+
+    const dow = day.d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+    const md  = day.d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+    grid.innerHTML += `
+      <div class="${cls.join(' ')}">
+        <div class="fc-date-row">
+          <div class="fc-dow">${dow}</div>
+          <div class="fc-md">${md}</div>
+        </div>
+        <div class="fc-num-row">
+          <div class="fc-num">${day.t}</div>
+          <div class="fc-num-pax">Total Pax</div>
+        </div>
+        <div class="fc-detail-row">
+          <span class="fc-d-item"><span class="fc-d-num">${day.a}</span><span class="fc-d-label">A</span></span>
+          <span class="fc-d-item"><span class="fc-d-num">${day.c}</span><span class="fc-d-label">C</span></span>
+          <span class="fc-d-item"><span class="fc-d-num">${day.r}</span><span class="fc-d-label">RM</span></span>
+        </div>
+      </div>`;
+  });
+}
+
+/* ----- Reset ----- */
+function resetUI() {
+  els.guestBody.innerHTML = `<tr><td colspan="6" class="empty-state">
+    <div class="empty-title">System standby</div>
+    <div class="empty-label">Paste data above to begin</div>
+  </td></tr>`;
+  els.forecastSection.classList.add('hidden');
+  els.reportArea.style.opacity = '0.15';
+  // printBtn always enabled for compatibility
+  els.exportBtn.disabled = true;
+  updateSummary(0, 0, 0);
+  els.rosterCount.textContent = '0 ENTRIES';
+}
+
+/* ----- Export ----- */
+function exportXLSX() {
+  if (!state.filtered.length) return;
+  const td = new Date(els.date.value);
+  const data = [
+    ['#','Room','Guest Name','VIP','Adults','Children','Child Age','Status','Rate','Remarks'],
+    ...state.filtered.map((g, i) => [
+      i + 1, g.room,
+      g.sharer ? `${g.name} with ${g.sharer}` : g.name,
+      g.vip ? 'VIP' : '',
+      g.adults, g.children, g.childAge,
+      g.isDayUse ? 'Day Use' : g.status, g.rateCode,
+      state.remarks[rowKey(g)] || ''
+    ])
+  ];
+  const totA = state.filtered.reduce((s,g)=>s+g.adults,0);
+  const totC = state.filtered.reduce((s,g)=>s+g.children,0);
+  data.push([], ['TOTAL','','','', totA, totC, '','','', `Rooms: ${state.filtered.length}`]);
+  if (state.extraNotes) {
+    data.push([], ['EXTRA NOTES'], [state.extraNotes]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:5},{wch:10},{wch:36},{wch:6},{wch:8},{wch:8},{wch:12},{wch:14},{wch:12},{wch:36}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Breakfast');
+  const fname = `breakfast_${td.toISOString().split('T')[0]}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  toast(`Exported · ${fname}`, 'success');
+}
+
+function escapeHtml(s) {
+  if (s === undefined || s === null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+/* ----- Bindings ----- */
+// Debounce input handlers — paste of large data should not trigger render on every char
+let engineTimer;
+function debouncedRunEngine() {
+  clearTimeout(engineTimer);
+  engineTimer = setTimeout(runEngine, 250);
+}
+els.inputA.addEventListener('input', debouncedRunEngine);
+els.inputB.addEventListener('input', debouncedRunEngine);
+els.date.addEventListener('input', runEngine); // date picker = immediate
+
+let searchTimer;
+els.search.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(runEngine, 150);
+});
+
+els.clearBtn.addEventListener('click', () => {
+  if (!confirm('Clear all input data, remarks, and extra notes?')) return;
+  els.inputA.value = ''; els.inputB.value = ''; els.search.value = '';
+  els.extraNotes.value = '';
+  state.remarks = {};
+  state.extraNotes = '';
+  $('extraNotesPrint').textContent = '';
+  runEngine();
+  toast('Data cleared', 'success');
+});
+
+// Print button — uses addEventListener (CSP-safe, works on Cloudflare/Netlify/etc.)
+els.printBtn.addEventListener('click', function() {
+  const original = this.textContent;
+  this.textContent = 'Opening print…';
+  // Restore button text quickly
+  setTimeout(() => { this.textContent = original; }, 1500);
+  // Trigger native print dialog
+  try {
+    window.print();
+  } catch (err) {
+    console.error('Print error:', err);
+    toast('Print blocked — try Ctrl+P', 'error');
+  }
+});
+els.exportBtn.addEventListener('click', exportXLSX);
+
+document.querySelectorAll('.quick-date').forEach(b => {
+  b.addEventListener('click', () => {
+    const d = new Date();
+    d.setDate(d.getDate() + parseInt(b.dataset.offset));
+    els.date.value = d.toISOString().split('T')[0];
+    runEngine();
+  });
+});
+
+document.addEventListener('keydown', (e) => {
+  const cmd = e.metaKey || e.ctrlKey;
+  if (cmd && e.key.toLowerCase() === 'k') { e.preventDefault(); els.search.focus(); }
+  if (cmd && e.key.toLowerCase() === 'p') { e.preventDefault(); window.print(); }
+  if (cmd && e.key.toLowerCase() === 'e' && !els.exportBtn.disabled) { e.preventDefault(); exportXLSX(); }
+});
+
+runEngine();
+</script>
+</body>
+</html>
