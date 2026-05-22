@@ -672,6 +672,65 @@
   }
 
   /* ============================================================
+     TABLE LEGEND
+     ============================================================ */
+  .table-legend {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-item .status-tag {
+    margin: 0;
+  }
+
+  /* ============================================================
+     POST-NIGHT-AUDIT COUNT LINE (in extra notes box footer)
+     ============================================================ */
+  .audit-count-line {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--rule);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .audit-count-text {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .audit-count-input {
+    width: 48px;
+    border: none;
+    border-bottom: 1.5px solid var(--ink);
+    background: transparent;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 0 4px 2px;
+    color: var(--ink);
+    outline: none;
+  }
+  .audit-count-input:focus {
+    background: #fffbe6;
+  }
+  .audit-count-input::placeholder {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* ============================================================
      TOAST
      ============================================================ */
   #toast {
@@ -1018,6 +1077,21 @@
       margin-bottom: 5pt !important;
     }
 
+    /* Table legend — compact for print */
+    .table-legend {
+      margin-top: 2pt !important;
+      padding: 2pt 4pt !important;
+      background: #fff !important;
+      border: 0.3pt solid #000 !important;
+      display: flex !important;
+      gap: 14pt !important;
+      font-size: 6.5pt !important;
+      color: #000 !important;
+    }
+    .table-legend .status-tag {
+      font-size: 5.5pt !important;
+    }
+
     /* ============================================================
        5.  7-DAY FORECAST  — Clean grid, service date highlighted
        ============================================================ */
@@ -1128,7 +1202,34 @@
     }
 
     /* ============================================================
-       6.  EXTRA NOTES BOX
+       6.  POST-NIGHT-AUDIT COUNT LINE (in extra notes footer)
+       ============================================================ */
+    .audit-count-line {
+      margin-top: 4pt !important;
+      padding-top: 3pt !important;
+      border-top: 0.3pt dashed #000 !important;
+      font-size: 8pt !important;
+      color: #000 !important;
+    }
+    .audit-count-text {
+      display: inline-flex !important;
+      align-items: baseline !important;
+      gap: 4pt !important;
+    }
+    .audit-count-input {
+      width: 30pt !important;
+      border: none !important;
+      border-bottom: 0.6pt solid #000 !important;
+      background: transparent !important;
+      text-align: center !important;
+      font-size: 11pt !important;
+      font-weight: 700 !important;
+      color: #000 !important;
+      padding: 0 2pt !important;
+    }
+
+    /* ============================================================
+       7.  EXTRA NOTES BOX
        ============================================================ */
     .extra-notes-box {
       border: 0.5pt solid #000 !important;
@@ -1262,9 +1363,14 @@
     <div class="intro-card">
       <h3>How this works</h3>
       <p>
-        Paste two PMS exports below. The tool figures out who's eligible for breakfast on the selected
-        service date — the morning <em>after</em> check-in through the morning <em>of</em> check-out,
-        plus any day-use bookings.
+        Paste two PMS exports below. The tool figures out who's eligible for breakfast on the
+        <strong>breakfast date</strong> you select — the morning <em>after</em> check-in through the
+        morning <em>of</em> check-out, plus any day-use bookings.
+      </p>
+      <p style="background: #fff8e1; border-left: 3px solid var(--gold); padding: 8px 12px; margin: 10px 0; font-size: 11.5px;">
+        <strong>📌 Important:</strong> The "Breakfast Date" is the <strong>morning the breakfast is served</strong>,
+        not the date guests checked in. Tonight's in-house guests eat breakfast tomorrow morning — so to prepare
+        for the next service, choose <strong>tomorrow's date</strong>.
       </p>
 
       <ol class="step-list">
@@ -1277,7 +1383,8 @@
           after today.
         </li>
         <li>
-          Pick a service date, review, type any per-room remarks, then print or export.
+          Pick the breakfast date, click <strong>↻ Recalculate</strong>, review the list, type any
+          per-room remarks, then print or export.
         </li>
       </ol>
 
@@ -1288,6 +1395,24 @@
         room revenue, housekeeping, statistics, and audit. The breakfast list is the symptom; PMS
         hygiene is the cure.
       </div>
+
+      <div class="tip" style="border-left-color: var(--gold); background: #fff8e1;">
+        <strong style="color: #8a6a00;">🌙 Watch out: post-night-audit reservations.</strong>
+        This report is only as current as the PMS exports used to generate it. If a reservation is
+        <strong>added or modified after night audit</strong> — and the report has already been printed —
+        that change <strong>will not appear</strong> on the printed list.
+        <br><br>
+        <strong>Daily control point for the front desk:</strong> before handing the list to the kitchen,
+        check the PMS for any reservations or modifications made <em>after</em> night audit. If any exist,
+        either:
+        <br>
+        &nbsp;&nbsp;• Re-export the data, click <strong>↻ Recalculate</strong>, and reprint, or
+        <br>
+        &nbsp;&nbsp;• Manually write the additions/changes on the printout and communicate them to the kitchen.
+        <br><br>
+        This usually doesn't happen often, but the 30-second check protects the kitchen from surprises.
+      </div>
+
       <div class="tip" style="border-left-color: var(--green); background: #f3f8f3;">
         <strong style="color: var(--green);">✓ No archiving needed:</strong> Generate, use, discard.
         The PMS is the single source of truth — as long as you keep up with daily PMS backups,
@@ -1299,12 +1424,15 @@
     <!-- TOP CONTROLS -->
     <div class="grid grid-cols-12 gap-4 mb-6">
       <div class="col-span-12 md:col-span-3">
-        <label class="block t-caption mb-2">Service Date</label>
+        <label class="block t-caption mb-2" style="color: var(--accent);">📅 Breakfast Date <span style="color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0;">(the morning you're preparing for)</span></label>
         <input type="date" id="targetDate" class="w-full px-3 py-2 font-semibold text-sm">
-        <div class="flex gap-2 mt-2">
-          <button class="quick-date btn btn-ghost text-[10px] px-2 py-1" data-offset="0">Today</button>
+        <div class="flex gap-2 mt-2 flex-wrap">
           <button class="quick-date btn btn-ghost text-[10px] px-2 py-1" data-offset="1">Tomorrow</button>
-          <button class="quick-date btn btn-ghost text-[10px] px-2 py-1" data-offset="2">+2d</button>
+          <button class="quick-date btn btn-ghost text-[10px] px-2 py-1" data-offset="2">+2 days</button>
+          <button class="quick-date btn btn-ghost text-[10px] px-2 py-1" data-offset="0">Today</button>
+        </div>
+        <div class="t-xs mt-2" style="color: var(--muted); line-height: 1.4;">
+          💡 Tonight's guests eat breakfast <strong>tomorrow morning</strong> — so for the next service, pick <strong>Tomorrow</strong>.
         </div>
       </div>
       <div class="col-span-12 md:col-span-5">
@@ -1317,7 +1445,8 @@
           <span><span class="kbd" id="kbdMod3">Ctrl</span>+<span class="kbd">E</span> export</span>
         </div>
       </div>
-      <div class="col-span-12 md:col-span-4 flex items-end gap-2">
+      <div class="col-span-12 md:col-span-4 flex items-end gap-2 flex-wrap">
+        <button id="recalcBtn" class="btn btn-primary flex-1 py-2.5" style="background: var(--accent); border-color: var(--accent); min-width: 120px;">↻ Recalculate</button>
         <button id="exportBtn" class="btn btn-ghost flex-1 py-2.5" disabled>Export · XLSX</button>
         <button id="printBtn" class="btn btn-primary flex-1 py-2.5">Print Report</button>
       </div>
@@ -1347,8 +1476,14 @@
 
     <div class="flex justify-between items-center t-xs flex-wrap gap-2" style="color: var(--muted);">
       <span>LAST SYNC · <span id="lastSync" style="color: var(--ink); font-weight: 600;">—</span></span>
-      <button id="clearAll" class="hover:text-red-700 transition-colors font-bold tracking-widest">CLEAR ALL DATA →</button>
+      <span style="display: flex; gap: 16px;">
+        <button id="diagBtn" class="hover:text-red-700 transition-colors font-bold tracking-widest" style="color: var(--accent);">🔍 DIAGNOSE R-FLAG</button>
+        <button id="clearAll" class="hover:text-red-700 transition-colors font-bold tracking-widest">CLEAR ALL DATA →</button>
+      </span>
     </div>
+
+    <!-- Diagnostic panel (hidden until DIAGNOSE clicked) -->
+    <div id="diagPanel" style="display:none; margin-top:12px; padding:12px; background:#1a1a1a; color:#0f0; font-family:monospace; font-size:11px; line-height:1.6; border-radius:4px; max-height:400px; overflow:auto; white-space:pre-wrap;"></div>
   </div>
 
   <div class="deco-rule max-w-7xl mx-auto"></div>
@@ -1367,7 +1502,7 @@
   <!-- DATE & SUMMARY -->
   <div class="grid grid-cols-12 gap-3 my-8">
     <div class="stat-tile col-span-12 md:col-span-4 dark">
-      <div class="stat-label">Service Date</div>
+      <div class="stat-label">Breakfast Date · Morning Of</div>
       <div class="stat-value medium" id="displayDate">—</div>
       <div class="stat-sub" id="displayDay">—</div>
     </div>
@@ -1428,6 +1563,11 @@
         </td></tr>
       </tbody>
     </table>
+    <!-- Legend -->
+    <div class="table-legend">
+      <span class="legend-item"><span class="status-tag reservation">R</span> = Reserved but not yet checked in (booking exists, guest has not arrived)</span>
+      <span class="legend-item"><span class="status-tag dayuse">Day Use</span> = Day-use booking (same-day arrival &amp; departure)</span>
+    </div>
   </div>
 
   <!-- 7-DAY FORECAST -->
@@ -1450,9 +1590,17 @@
     </div>
     <textarea id="extraNotes"
       class="extra-notes-textarea no-print"
-      placeholder="Type allergies, VIP arrangements, set-up changes, banquet overlap, staffing notes…"></textarea>
+      placeholder="Type allergies, VIP arrangements, set-up changes, banquet overlap, staffing notes, or post-audit reservation changes…"></textarea>
     <!-- Lined area visible only on print (so kitchen can write by hand) -->
     <div class="extra-notes-lines hidden print:block" id="extraNotesPrint"></div>
+
+    <!-- Post-night-audit count line (appears on screen + print) -->
+    <div class="audit-count-line">
+      <span class="audit-count-text">
+        <input type="text" id="auditCount" class="audit-count-input" maxlength="3" placeholder="__" autocomplete="off">
+        <span>guest(s) show up after night audit before breakfast time</span>
+      </span>
+    </div>
   </div>
 
   <!-- SIGNATURE BLOCK -->
@@ -1575,26 +1723,59 @@ function toast(msg, type = '') {
 }
 
 /* ----- Date Parsing ----- */
+/* ----- Date Parsing -----
+   CRITICAL: PMS dates like "2026-05-19" are parsed by JavaScript
+   as UTC midnight, which shifts to a different local date in most timezones.
+   We must construct dates using LOCAL timezone components to avoid off-by-one errors.
+   A guest with check-in "2026-05-19" must be 5/19 in any timezone, not 5/18 or 5/20.
+*/
 function parseFlexDate(val) {
   if (val === null || val === undefined) return null;
   let s = val.toString().trim();
   if (!s) return null;
+
+  // Excel serial number — convert via UTC math, then extract Y/M/D and rebuild as local
   if (/^\d+(\.\d+)?$/.test(s) && parseFloat(s) > 1000 && parseFloat(s) < 100000) {
-    const d = new Date(Math.round((parseFloat(s) - 25569) * 86400 * 1000));
-    d.setHours(0,0,0,0); return d;
+    const utcDate = new Date(Math.round((parseFloat(s) - 25569) * 86400 * 1000));
+    // Extract Y/M/D from the UTC representation (that's the "intended" date)
+    return new Date(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate(), 0, 0, 0, 0);
   }
-  let d = new Date(s);
-  if (!isNaN(d.getTime())) { d.setHours(0,0,0,0); return d; }
-  const parts = s.split(/[-/.\s]/).filter(Boolean);
-  if (parts.length >= 3) {
-    let y, m, dd;
-    if (parts[0].length === 4) [y,m,dd] = parts;
-    else if (parts[2].length === 4) [dd,m,y] = parts;
-    else return null;
-    const out = new Date(+y, +m - 1, +dd);
-    out.setHours(0,0,0,0);
+
+  // ISO format YYYY-MM-DD (or YYYY/MM/DD or YYYY.MM.DD) → parse manually as LOCAL
+  const isoMatch = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (isoMatch) {
+    const [, y, m, d] = isoMatch;
+    const out = new Date(+y, +m - 1, +d, 0, 0, 0, 0);
     return isNaN(out.getTime()) ? null : out;
   }
+
+  // DD/MM/YYYY or DD-MM-YYYY (European/local format)
+  const dmyMatch = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+  if (dmyMatch) {
+    const [, d, m, y] = dmyMatch;
+    const out = new Date(+y, +m - 1, +d, 0, 0, 0, 0);
+    return isNaN(out.getTime()) ? null : out;
+  }
+
+  // Datetime strings like "2026-05-19 14:30:00" or "2026-05-19T14:30"
+  const dtMatch = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})[T\s]/);
+  if (dtMatch) {
+    const [, y, m, d] = dtMatch;
+    const out = new Date(+y, +m - 1, +d, 0, 0, 0, 0);
+    return isNaN(out.getTime()) ? null : out;
+  }
+
+  // Fallback: try native parse but extract local Y/M/D to be safe
+  let nativeDate = new Date(s);
+  if (!isNaN(nativeDate.getTime())) {
+    return new Date(
+      nativeDate.getFullYear(),
+      nativeDate.getMonth(),
+      nativeDate.getDate(),
+      0, 0, 0, 0
+    );
+  }
+
   return null;
 }
 
@@ -1649,7 +1830,13 @@ function processSource(text, label) {
     }
 
     const status = (r[cols.status] || "").trim().toLowerCase();
-    if (["cancelled","canceled","no-show","no show","void"].includes(status)) return null;
+    // Exclude cancellations, no-shows, AND already-departed guests
+    // (Check-in/out Report may include historical departures that shouldn't be in breakfast list)
+    const departedStatuses = [
+      "cancelled","canceled","no-show","no show","void",
+      "checked out","checked-out","checkedout","departed","departure","out"
+    ];
+    if (departedStatuses.some(s => status === s || status.includes(s))) return null;
 
     const isVIP = cols.vip !== -1 && (r[cols.vip] || "").trim().toLowerCase().match(/^(y|yes|true|1|vip)$/);
 
@@ -1714,8 +1901,11 @@ function formatGuestName(name, explicitSharer) {
 
 /* ----- Main Engine ----- */
 function runEngine() {
-  const td = new Date(els.date.value); td.setHours(0,0,0,0);
-  if (isNaN(td.getTime())) { toast('Invalid date', 'error'); return; }
+  // Use parseFlexDate to ensure local-timezone date construction.
+  // els.date.value returns "YYYY-MM-DD" string which native Date() treats as UTC,
+  // causing off-by-one timezone bugs.
+  const td = parseFlexDate(els.date.value);
+  if (!td) { toast('Invalid date', 'error'); return; }
 
   $('displayDate').textContent = td.toLocaleDateString('en-GB', {
     day: 'numeric', month: 'long', year: 'numeric'
@@ -1735,10 +1925,53 @@ function runEngine() {
     toast(`Parse warning: ${(A.errors[0]||B.errors[0])}`, 'error');
   }
 
+  // Merge logic with check-in status detection:
+  // - Source A = Check-in/out Report → guest has physically checked in
+  // - Source B = Reservation Report → may include not-yet-arrived bookings
+  // A guest present ONLY in Source B (not in A) = reserved but not checked in → show "R"
+  //
+  // Matching is tricky: the same guest may have a different booking ID across the
+  // two reports, or slightly different room formatting. We build multiple match keys
+  // (by ID, and by room+name) so a guest counts as "checked in" if ANY key matches.
+
+  function matchKeys(g) {
+    const keys = [];
+    if (g.id) keys.push('id:' + g.id.toLowerCase().trim());
+    const room = (g.room || '').toLowerCase().trim();
+    const name = (g.name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    // room + name combo is the most reliable cross-report match
+    if (room && name && room !== 'tba') keys.push('rn:' + room + '|' + name);
+    // name + check-in date as a fallback (handles room reassignment)
+    if (name && g.checkin) keys.push('nd:' + name + '|' + g.checkin.getTime());
+    return keys;
+  }
+
+  // Collect every match key that appears in Source A (checked-in guests)
+  const checkedInKeys = new Set();
+  A.rows.forEach(b => matchKeys(b).forEach(k => checkedInKeys.add(k)));
+
   const merged = new Map();
-  B.rows.forEach(b => merged.set(rowKey(b), b));
-  A.rows.forEach(b => merged.set(rowKey(b), b));
+  // Add reservations that are NOT yet checked in (only pure reservations get added from B).
+  // If a B-record matches something in A, skip it — the A version is the source of truth
+  // and will be added below as checked-in.
+  B.rows.forEach(b => {
+    const isCheckedIn = matchKeys(b).some(k => checkedInKeys.has(k));
+    if (isCheckedIn) return;  // skip — will be added from Source A
+    b.checkedIn = false;      // pure reservation → show R
+    merged.set(rowKey(b), b);
+  });
+  // Source A always wins and is always checked-in
+  A.rows.forEach(b => {
+    b.checkedIn = true;
+    merged.set(rowKey(b), b);
+  });
   state.merged = Array.from(merged.values());
+
+  // Count reserved-not-checked-in for status display
+  const reservedCount = state.merged.filter(g => g.checkedIn === false).length;
+  if (reservedCount > 0) {
+    console.log(`[Breakfast Pro] ${reservedCount} reserved-but-not-checked-in guest(s) flagged with R`);
+  }
 
   if (state.merged.length === 0) { resetUI(); return; }
 
@@ -1789,21 +2022,22 @@ function renderRoster(list, totalEligible) {
     const k = rowKey(g);
     const savedRemark = state.remarks[k] || '';
 
-    const statusCls = g.isDayUse ? 'dayuse'
-      : g.status.includes('confirm') ? 'confirmed'
-      : g.status.includes('tentative') ? 'tentative'
-      : g.status.includes('reservation') ? 'reservation' : '';
-
-    let statusLabel;
-    if (g.isDayUse) statusLabel = 'Day Use';
-    else if (g.status.includes('reservation')) statusLabel = 'R';
-    else statusLabel = g.status;
+    // Badge logic:
+    // - Day Use → "Day Use" badge
+    // - Reserved but NOT checked in (only in reservation report) → "R" badge
+    let badges = '';
+    if (g.isDayUse) {
+      badges += ` <span class="status-tag dayuse">Day Use</span>`;
+    }
+    if (g.checkedIn === false) {
+      badges += ` <span class="status-tag reservation" title="Reserved — not yet checked in">R</span>`;
+    }
 
     tr.innerHTML = `
       <td class="sr-cell">${i + 1}</td>
       <td class="room-cell">${escapeHtml(g.room)}</td>
       <td>
-        <div class="name-cell">${g.vip ? '<span class="vip-mark">VIP</span>' : ''}${formatGuestName(g.name, g.sharer)}${statusLabel ? ` <span class="status-tag ${statusCls}">${escapeHtml(statusLabel)}</span>` : ''}${g.rateCode ? ` <span class="status-tag">${escapeHtml(g.rateCode)}</span>` : ''}</div>
+        <div class="name-cell">${g.vip ? '<span class="vip-mark">VIP</span>' : ''}${formatGuestName(g.name, g.sharer)}${badges}</div>
       </td>
       <td class="pax-cell">
         <span>${g.adults}<span class="pax-letter">A</span></span>${g.children > 0 ? `<span class="child">${g.children}<span class="pax-letter" style="opacity:0.7;">C</span></span>` : ''}
@@ -1835,7 +2069,8 @@ function renderRoster(list, totalEligible) {
   // printBtn always enabled
   els.exportBtn.disabled = false;
   els.reportArea.style.opacity = '1';
-  els.rosterCount.textContent = `${list.length} OF ${totalEligible} ENTRIES`;
+  const rCount = list.filter(g => g.checkedIn === false).length;
+  els.rosterCount.textContent = `${list.length} OF ${totalEligible} ENTRIES` + (rCount > 0 ? ` · ${rCount} not checked in (R)` : '');
 }
 
 function updateSummary(rooms, a, c) {
@@ -1920,27 +2155,27 @@ function resetUI() {
 /* ----- Export ----- */
 function exportXLSX() {
   if (!state.filtered.length) return;
-  const td = new Date(els.date.value);
+  const td = parseFlexDate(els.date.value) || new Date();
   const data = [
-    ['#','Room','Guest Name','VIP','Adults','Children','Child Age','Status','Rate','Remarks'],
-    ...state.filtered.map((g, i) => [
-      i + 1, g.room,
-      g.sharer ? `${g.name} with ${g.sharer}` : g.name,
-      g.vip ? 'VIP' : '',
-      g.adults, g.children, g.childAge,
-      g.isDayUse ? 'Day Use' : g.status, g.rateCode,
-      state.remarks[rowKey(g)] || ''
-    ])
+    ['#','Room','Guest Name','Adults','Children','Remarks'],
+    ...state.filtered.map((g, i) => {
+      let nm = g.sharer ? `${g.name} with ${g.sharer}` : g.name;
+      if (g.isDayUse) nm += ' [Day Use]';
+      if (g.checkedIn === false) nm += ' (R - not checked in)';
+      return [ i + 1, g.room, nm, g.adults, g.children, state.remarks[rowKey(g)] || '' ];
+    })
   ];
   const totA = state.filtered.reduce((s,g)=>s+g.adults,0);
   const totC = state.filtered.reduce((s,g)=>s+g.children,0);
-  data.push([], ['TOTAL','','','', totA, totC, '','','', `Rooms: ${state.filtered.length}`]);
+  data.push([], ['TOTAL','','', totA, totC, `Rooms: ${state.filtered.length}`]);
   if (state.extraNotes) {
     data.push([], ['EXTRA NOTES'], [state.extraNotes]);
   }
+  const auditCount = ($('auditCount') && $('auditCount').value.trim()) || '0';
+  data.push([], [`POST-NIGHT-AUDIT: ${auditCount} guest(s) showed up after night audit before breakfast time`]);
 
   const ws = XLSX.utils.aoa_to_sheet(data);
-  ws['!cols'] = [{wch:5},{wch:10},{wch:36},{wch:6},{wch:8},{wch:8},{wch:12},{wch:14},{wch:12},{wch:36}];
+  ws['!cols'] = [{wch:5},{wch:10},{wch:36},{wch:8},{wch:8},{wch:40}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Breakfast');
   const fname = `breakfast_${td.toISOString().split('T')[0]}.xlsx`;
@@ -1983,6 +2218,78 @@ els.clearBtn.addEventListener('click', () => {
   toast('Data cleared', 'success');
 });
 
+// Diagnostic button — shows how each report parsed and why R is/isn't shown
+const diagBtn = $('diagBtn');
+if (diagBtn) {
+  diagBtn.addEventListener('click', () => {
+    const panel = $('diagPanel');
+    if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+
+    const A = processSource(els.inputA.value, 'Source A');
+    const B = processSource(els.inputB.value, 'Source B');
+
+    let out = '';
+    out += '═══ DIAGNOSTIC REPORT ═══\n\n';
+    out += `Source A (Check-in/out Report): ${A.rows.length} rows parsed\n`;
+    out += `Source B (Reservation Report): ${B.rows.length} rows parsed\n`;
+    if (A.errors.length) out += `Source A errors: ${A.errors.join('; ')}\n`;
+    if (B.errors.length) out += `Source B errors: ${B.errors.join('; ')}\n`;
+    out += '\n';
+
+    out += '─── SOURCE A (first 5 rows) — these are treated as CHECKED IN ───\n';
+    A.rows.slice(0, 5).forEach((g, i) => {
+      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${g.id||'(none)'}" | in=${g.checkin?fmt(g.checkin):'?'} out=${g.checkout?fmt(g.checkout):'?'}\n`;
+    });
+    out += '\n';
+
+    out += '─── SOURCE B (first 5 rows) — reservations ───\n';
+    B.rows.slice(0, 5).forEach((g, i) => {
+      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${g.id||'(none)'}" | in=${g.checkin?fmt(g.checkin):'?'} out=${g.checkout?fmt(g.checkout):'?'}\n`;
+    });
+    out += '\n';
+
+    // Run match test
+    function mk(g) {
+      const keys = [];
+      if (g.id) keys.push('id:' + g.id.toLowerCase().trim());
+      const room = (g.room || '').toLowerCase().trim();
+      const name = (g.name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      if (room && name && room !== 'tba') keys.push('rn:' + room + '|' + name);
+      if (name && g.checkin) keys.push('nd:' + name + '|' + g.checkin.getTime());
+      return keys;
+    }
+    const ck = new Set();
+    A.rows.forEach(g => mk(g).forEach(k => ck.add(k)));
+
+    out += '─── MATCH TEST: which B reservations are flagged R? ───\n';
+    let rCount = 0;
+    B.rows.forEach((g) => {
+      const matched = mk(g).some(k => ck.has(k));
+      if (!matched) {
+        rCount++;
+        out += `🔴 R → Room=${g.room} Name="${g.name}" (NOT found in Source A)\n`;
+      }
+    });
+    if (rCount === 0) {
+      out += '⚠️  ZERO reservations flagged R.\n';
+      out += 'This means EVERY Source B guest was matched to a Source A entry.\n';
+      out += 'Likely cause: Source A also contains future reservations (not just checked-in guests),\n';
+      out += 'OR the two reports share booking IDs / room+name for everyone.\n';
+    } else {
+      out += `\n✓ ${rCount} reservation(s) would show R.\n`;
+      out += 'If you still do not see them in the list, those guests may not be\n';
+      out += 'eligible for breakfast on the selected date (check-in date is in the future).\n';
+    }
+
+    panel.textContent = out;
+  });
+}
+
+function fmt(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
 // Print button — uses addEventListener (CSP-safe, works on Cloudflare/Netlify/etc.)
 els.printBtn.addEventListener('click', function() {
   const original = this.textContent;
@@ -1998,6 +2305,23 @@ els.printBtn.addEventListener('click', function() {
   }
 });
 els.exportBtn.addEventListener('click', exportXLSX);
+
+// Recalculate button — manual trigger after data/date change
+const recalcBtn = $('recalcBtn');
+if (recalcBtn) {
+  recalcBtn.addEventListener('click', function() {
+    const original = this.textContent;
+    this.textContent = '⟳ Calculating…';
+    this.disabled = true;
+    // Slight delay for visual feedback
+    setTimeout(() => {
+      runEngine();
+      this.textContent = original;
+      this.disabled = false;
+      toast('Recalculated', 'success');
+    }, 150);
+  });
+}
 
 document.querySelectorAll('.quick-date').forEach(b => {
   b.addEventListener('click', () => {
