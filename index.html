@@ -315,6 +315,66 @@
     border-radius: 2px;
   }
 
+  /* Manual add guest row */
+  .manual-add-row {
+    margin-top: 12px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px dashed var(--rule);
+    background: transparent;
+  }
+  .manual-add-btn {
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .manual-add-btn:hover {
+    background: var(--accent);
+    color: var(--paper);
+    border-color: var(--accent);
+  }
+  .manual-add-hint {
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* Manual row styling — distinct from PMS-generated rows */
+  tr.manual-row {
+    background: #fffbe6;
+  }
+  tr.manual-row td {
+    border-top: 1px dashed var(--accent) !important;
+  }
+  .manual-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    padding: 2px 4px;
+    outline: none;
+  }
+  .manual-input:focus {
+    background: #fff;
+    box-shadow: 0 0 0 1.5px var(--accent);
+  }
+  .manual-delete-btn {
+    border: none;
+    background: transparent;
+    color: var(--red);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+  }
+
   /* To-go checkbox column — narrowest possible */
   .togo-cell {
     text-align: center;
@@ -1660,6 +1720,11 @@
       <span class="legend-item"><span class="status-tag reservation">R</span> = Reserved but not yet checked in (booking exists, guest has not arrived)</span>
       <span class="legend-item"><span class="status-tag dayuse">Day Use</span> = Day-use booking (same-day arrival &amp; departure)</span>
     </div>
+    <!-- Manual add row button (hidden in print) -->
+    <div class="manual-add-row no-print">
+      <button id="addManualBtn" type="button" class="manual-add-btn">+ Add Guest Manually</button>
+      <span class="manual-add-hint">For walk-ins or last-minute additions not yet in PMS</span>
+    </div>
   </div>
 
   <!-- 7-DAY FORECAST -->
@@ -1789,6 +1854,7 @@ const state = {
   filtered: [],
   remarks: {},
   togo: {},
+  manualGuests: [],   // manually added rows (walk-ins, last-minute adds)
   extraNotes: ''
 };
 
@@ -2227,12 +2293,32 @@ function runEngine() {
   const merged = new Map();
   let fromA = 0, fromBOnly = 0;
 
+  // Build a map of Booking ID → actual room(s) from Source A.
+  // Source A's room field reflects the REAL current room (after any room
+  // moves), while Source B's room is the original reservation room and
+  // may be outdated.
+  const realRoomById = new Map();
+  A.rows.forEach(a => {
+    if (a.id) {
+      const id = a.id.toString().trim();
+      if (a.room && a.room.trim()) realRoomById.set(id, a.room.trim());
+    }
+  });
+
   // Track Source B guests by Booking ID so we can dedupe across sources
   const bIds = new Set();
   B.rows.forEach(b => {
     if (b.id) bIds.add(b.id.toString().trim());
     // R is shown when status is reservation-like (or unknown — safer to flag)
     b.checkedIn = isCheckedInStatus(b.status);
+    // OVERRIDE: if Source A has a different room for this booking (room move),
+    // use the Source A version. This handles the "102 moved to 116" case.
+    if (b.id) {
+      const realRoom = realRoomById.get(b.id.toString().trim());
+      if (realRoom && realRoom !== b.room) {
+        b.room = realRoom;
+      }
+    }
     merged.set(rowKey(b), b);
     fromBOnly++;
   });
@@ -2245,6 +2331,18 @@ function runEngine() {
     b.checkedIn = true;  // present in Source A but missing from B = long-stay in-house
     merged.set(rowKey(b), b);
     fromA++;
+  });
+
+  // EXPAND/RESOLVE multi-room records: a single booking's room field may
+  // contain multiple rooms (e.g. "102,116" or "102→116"). This typically
+  // means a ROOM MOVE — guest was assigned 102 first, then moved to 116.
+  // We take the LAST room as the current/correct one.
+  Array.from(merged.values()).forEach(g => {
+    const roomStr = (g.room || '').trim();
+    const parts = roomStr.split(/[,;/→\->]+/).map(s => s.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      g.room = parts[parts.length - 1];  // most recent room
+    }
   });
 
   window.__lastMergeStats = { fromA, fromBOnly, total: merged.size };
@@ -2346,6 +2444,9 @@ function renderRoster(list, totalEligible) {
   });
   els.guestBody.appendChild(frag);
 
+  // Append manually-added guests at the bottom
+  renderManualRows(list.length);
+
   // Bind remark inputs
   els.guestBody.querySelectorAll('.remarks-input').forEach(input => {
     input.addEventListener('input', (e) => {
@@ -2371,12 +2472,18 @@ function renderRoster(list, totalEligible) {
     if (cell && input.checked) cell.classList.add('togo-active');
   });
 
-  updateSummary(list.length, totalA, totalC);
+  // Add manually-added guests to totals
+  const manualA = state.manualGuests.reduce((s, m) => s + (parseInt(m.adults) || 0), 0);
+  const manualC = state.manualGuests.reduce((s, m) => s + (parseInt(m.children) || 0), 0);
+  const manualCount = state.manualGuests.length;
+
+  updateSummary(list.length + manualCount, totalA + manualA, totalC + manualC);
   // printBtn always enabled
   els.exportBtn.disabled = false;
   els.reportArea.style.opacity = '1';
   const rCount = list.filter(g => g.checkedIn === false).length;
-  els.rosterCount.textContent = `${list.length} OF ${totalEligible} ENTRIES` + (rCount > 0 ? ` · ${rCount} not checked in (R)` : '');
+  const manualSuffix = manualCount > 0 ? ` + ${manualCount} manual` : '';
+  els.rosterCount.textContent = `${list.length}${manualSuffix} OF ${totalEligible} ENTRIES` + (rCount > 0 ? ` · ${rCount} not checked in (R)` : '');
 }
 
 function updateSummary(rooms, a, c) {
@@ -2460,7 +2567,7 @@ function resetUI() {
 
 /* ----- Export ----- */
 function exportXLSX() {
-  if (!state.filtered.length) return;
+  if (!state.filtered.length && !state.manualGuests.length) return;
   const td = parseFlexDate(els.date.value) || new Date();
   const data = [
     ['#','Room','Guest Name','Adults','Children','Remarks','To-go'],
@@ -2470,12 +2577,26 @@ function exportXLSX() {
       if (g.checkedIn === false) nm += ' (R - not checked in)';
       const k = rowKey(g);
       return [ i + 1, g.room, nm, g.adults, g.children, state.remarks[k] || '', state.togo[k] ? 'Yes' : '' ];
-    })
+    }),
+    // Append manual guests (walk-ins / last-minute additions)
+    ...state.manualGuests.map((m, i) => [
+      state.filtered.length + i + 1,
+      m.room || '',
+      (m.name || '') + ' [Manual]',
+      parseInt(m.adults) || 0,
+      parseInt(m.children) || 0,
+      m.remarks || '',
+      m.togo ? 'Yes' : ''
+    ])
   ];
-  const totA = state.filtered.reduce((s,g)=>s+g.adults,0);
-  const totC = state.filtered.reduce((s,g)=>s+g.children,0);
-  const togoCount = state.filtered.filter(g => state.togo[rowKey(g)]).length;
-  data.push([], ['TOTAL','','', totA, totC, `Rooms: ${state.filtered.length}`, `To-go: ${togoCount}`]);
+  const totA = state.filtered.reduce((s,g)=>s+g.adults,0) +
+               state.manualGuests.reduce((s,m)=>s+(parseInt(m.adults)||0),0);
+  const totC = state.filtered.reduce((s,g)=>s+g.children,0) +
+               state.manualGuests.reduce((s,m)=>s+(parseInt(m.children)||0),0);
+  const totalRooms = state.filtered.length + state.manualGuests.length;
+  const togoCount = state.filtered.filter(g => state.togo[rowKey(g)]).length +
+                    state.manualGuests.filter(m => m.togo).length;
+  data.push([], ['TOTAL','','', totA, totC, `Rooms: ${totalRooms}`, `To-go: ${togoCount}`]);
   if (state.extraNotes) {
     data.push([], ['EXTRA NOTES'], [state.extraNotes]);
   }
@@ -2521,6 +2642,7 @@ els.clearBtn.addEventListener('click', () => {
   els.extraNotes.value = '';
   state.remarks = {};
   state.togo = {};
+  state.manualGuests = [];
   state.extraNotes = '';
   $('extraNotesPrint').textContent = '';
   runEngine();
@@ -2666,6 +2788,105 @@ els.printBtn.addEventListener('click', function() {
   }
 });
 els.exportBtn.addEventListener('click', exportXLSX);
+
+// === MANUAL GUEST MANAGEMENT ===
+// Render manually-added rows at the bottom of the table
+function renderManualRows(startIdx) {
+  state.manualGuests.forEach((m, i) => {
+    const tr = document.createElement('tr');
+    tr.className = 'manual-row';
+    const idx = startIdx + i + 1;
+    tr.innerHTML = `
+      <td class="sr-cell">${idx}</td>
+      <td class="room-cell">
+        <input type="text" class="manual-input" data-idx="${i}" data-field="room"
+               value="${escapeHtml(m.room || '')}" placeholder="Room" autocomplete="off">
+      </td>
+      <td>
+        <input type="text" class="manual-input" data-idx="${i}" data-field="name"
+               value="${escapeHtml(m.name || '')}" placeholder="Guest name (walk-in / manual add)" autocomplete="off">
+      </td>
+      <td class="pax-cell">
+        <input type="number" class="manual-input" data-idx="${i}" data-field="adults"
+               value="${m.adults || 1}" min="0" max="20" style="width:32px; text-align:center;"><span class="pax-letter">A</span>
+        ${(parseInt(m.children) || 0) > 0 ? '<span class="child">' : '<span>'}
+        <input type="number" class="manual-input" data-idx="${i}" data-field="children"
+               value="${m.children || 0}" min="0" max="10" style="width:28px; text-align:center;"><span class="pax-letter" style="opacity:0.7;">C</span></span>
+      </td>
+      <td class="time-cell"></td>
+      <td class="remarks-cell">
+        <input type="text" class="manual-input" data-idx="${i}" data-field="remarks"
+               value="${escapeHtml(m.remarks || '')}" placeholder="Remarks" autocomplete="off">
+      </td>
+      <td class="togo-cell ${m.togo ? 'togo-active' : ''}">
+        <label class="togo-label">
+          <input type="checkbox" class="manual-togo-input" data-idx="${i}" ${m.togo ? 'checked' : ''}>
+          <span class="togo-box" aria-hidden="true"></span>
+        </label>
+        <button class="manual-delete-btn no-print" data-idx="${i}" title="Remove this row">✕</button>
+      </td>
+    `;
+    els.guestBody.appendChild(tr);
+  });
+
+  // Bind manual input changes
+  els.guestBody.querySelectorAll('.manual-input').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      const field = e.target.dataset.field;
+      if (state.manualGuests[idx]) {
+        state.manualGuests[idx][field] = e.target.value;
+        // Re-render counts when adults/children change
+        if (field === 'adults' || field === 'children') {
+          updateManualTotals();
+        }
+      }
+    });
+  });
+
+  // Bind manual to-go checkboxes
+  els.guestBody.querySelectorAll('.manual-togo-input').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      if (state.manualGuests[idx]) {
+        state.manualGuests[idx].togo = e.target.checked;
+        const cell = e.target.closest('.togo-cell');
+        if (cell) cell.classList.toggle('togo-active', e.target.checked);
+      }
+    });
+  });
+
+  // Bind delete buttons
+  els.guestBody.querySelectorAll('.manual-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      state.manualGuests.splice(idx, 1);
+      runEngine();
+    });
+  });
+}
+
+function updateManualTotals() {
+  const manualA = state.manualGuests.reduce((s, m) => s + (parseInt(m.adults) || 0), 0);
+  const manualC = state.manualGuests.reduce((s, m) => s + (parseInt(m.children) || 0), 0);
+  const pmsA = state.filtered.reduce((s, g) => s + (g.adults || 0), 0);
+  const pmsC = state.filtered.reduce((s, g) => s + (g.children || 0), 0);
+  updateSummary(state.filtered.length + state.manualGuests.length, pmsA + manualA, pmsC + manualC);
+}
+
+// Add Guest button
+const addManualBtn = $('addManualBtn');
+if (addManualBtn) {
+  addManualBtn.addEventListener('click', () => {
+    state.manualGuests.push({ room: '', name: '', adults: 1, children: 0, remarks: '', togo: false });
+    runEngine();
+    // Focus the new row's room input
+    setTimeout(() => {
+      const inputs = els.guestBody.querySelectorAll('.manual-row .manual-input[data-field="room"]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    }, 50);
+  });
+}
 
 // Recalculate button — manual trigger after data/date change
 const recalcBtn = $('recalcBtn');
