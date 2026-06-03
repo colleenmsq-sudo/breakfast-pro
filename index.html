@@ -315,6 +315,63 @@
     border-radius: 2px;
   }
 
+  /* To-go checkbox column — narrowest possible */
+  .togo-cell {
+    text-align: center;
+    width: 56px;
+    min-width: 56px;
+    padding: 4px 2px;
+    white-space: nowrap;
+  }
+  th.center:last-child {
+    white-space: nowrap;
+    font-size: 10px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .togo-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+  .togo-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+  .togo-box {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--rule);
+    background: #fff;
+    border-radius: 3px;
+    position: relative;
+    transition: all 0.15s ease;
+  }
+  .togo-label:hover .togo-box {
+    border-color: var(--accent);
+    background: #fffbe6;
+  }
+  .togo-cell.togo-active .togo-box {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .togo-cell.togo-active .togo-box::after {
+    content: '✓';
+    position: absolute;
+    top: -4px;
+    left: 1px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+
   /* ============================================================
      STATUS PILLS
      ============================================================ */
@@ -1071,6 +1128,39 @@
       height: 0;
     }
 
+    /* To-go column — narrowest possible */
+    .togo-cell {
+      padding: 1.5pt 2pt !important;
+      text-align: center !important;
+      width: 22pt !important;
+    }
+    .togo-label {
+      display: inline-block !important;
+      cursor: default !important;
+    }
+    .togo-input {
+      display: none !important;
+    }
+    .togo-box {
+      display: inline-block !important;
+      width: 9pt !important;
+      height: 9pt !important;
+      border: 0.6pt solid #000 !important;
+      background: #fff !important;
+      position: relative;
+      vertical-align: middle;
+    }
+    .togo-cell.togo-active .togo-box::after {
+      content: '✓';
+      position: absolute;
+      top: -3pt;
+      left: 0pt;
+      font-size: 9pt;
+      font-weight: 700;
+      color: #000;
+      line-height: 1;
+    }
+
     /* Section spacing */
     .report-area > .mb-12,
     .report-area > .mb-8 {
@@ -1544,7 +1634,8 @@
         <col>
         <col style="width: 75px">
         <col style="width: 65px">
-        <col style="width: 32%">
+        <col style="width: 28%">
+        <col style="width: 56px">
       </colgroup>
       <thead>
         <tr>
@@ -1554,10 +1645,11 @@
           <th class="center">Pax</th>
           <th class="center">Time</th>
           <th>Remarks</th>
+          <th class="center">To-go</th>
         </tr>
       </thead>
       <tbody id="guestTableBody">
-        <tr><td colspan="6" class="empty-state">
+        <tr><td colspan="7" class="empty-state">
           <div class="empty-title">Awaiting data sync…</div>
           <div class="empty-label">Paste source data above to generate roster</div>
         </td></tr>
@@ -1696,6 +1788,7 @@ const state = {
   merged: [],
   filtered: [],
   remarks: {},
+  togo: {},
   extraNotes: ''
 };
 
@@ -1780,6 +1873,12 @@ function parseFlexDate(val) {
 }
 
 function findHeaderCol(headers, keys) {
+  // PASS 1: exact match (case-insensitive) — strongest signal
+  for (let i = 0; i < headers.length; i++) {
+    const h = headers[i].toLowerCase().trim();
+    if (keys.some(k => h === k.toLowerCase())) return i;
+  }
+  // PASS 2: substring match — fallback for variants like "Reservation Status"
   for (let i = 0; i < headers.length; i++) {
     const h = headers[i].toLowerCase();
     if (keys.some(k => h.includes(k.toLowerCase()))) return i;
@@ -1790,9 +1889,96 @@ function findHeaderCol(headers, keys) {
 /* ----- Parse Source ----- */
 function processSource(text, label) {
   if (!text.trim()) return { rows: [], errors: [] };
-  const lines = text.trim().split('\n').map(r => r.split('\t'));
+
+  // STEP 1: Find the HEADER ROW automatically.
+  // The pasted text may have garbage lines BEFORE the actual header (PMS
+  // footer rows, payment notes, partial cells from multi-line records).
+  // We scan every line and pick the one that looks most like a header —
+  // i.e., contains the most expected column-name keywords.
+  const rawLines = text.replace(/\r/g, '').split('\n');
+
+  const HEADER_KEYWORDS = [
+    'check-in', 'check in', 'checkin', 'arrival',
+    'check-out', 'check out', 'checkout', 'departure',
+    'guest name', 'customer name', 'pax name',
+    'booking id', 'reservation id', 'confirmation',
+    'room no', 'room number',
+    'adult', 'children', 'child',
+    'status', 'state',
+    'creation date', 'booking source',
+    'rate', 'company',
+  ];
+
+  let headerIdx = -1;
+  let bestScore = 0;
+  for (let i = 0; i < rawLines.length; i++) {
+    const lower = rawLines[i].toLowerCase();
+    let score = 0;
+    HEADER_KEYWORDS.forEach(k => {
+      if (lower.includes(k)) score++;
+    });
+    // A real header should match at least 3 keywords AND have several tabs
+    const tabCount = (rawLines[i].match(/\t/g) || []).length;
+    if (score >= 3 && tabCount >= 5 && score > bestScore) {
+      bestScore = score;
+      headerIdx = i;
+    }
+  }
+
+  // Fallback: if no clear header found, assume the first line with the most
+  // tabs is the header (legacy behavior).
+  if (headerIdx === -1) {
+    let maxTabs = 0;
+    rawLines.forEach((line, i) => {
+      const tabs = (line.match(/\t/g) || []).length;
+      if (tabs > maxTabs) { maxTabs = tabs; headerIdx = i; }
+    });
+    if (headerIdx === -1) headerIdx = 0;
+  }
+
+  const headerLine = rawLines[headerIdx];
+  const expectedTabs = (headerLine.match(/\t/g) || []).length;
+
+  // STEP 2: Take lines AFTER the header, stitch continuation lines back together.
+  // A "continuation" is a line with significantly fewer tabs than the header —
+  // it's a wrapped cell from the previous record, not a new record.
+  const dataLines = rawLines.slice(headerIdx + 1);
+  const stitchedDataLines = [];
+  dataLines.forEach(line => {
+    if (!line.trim()) return;  // skip empty lines
+    const tabCount = (line.match(/\t/g) || []).length;
+    if (tabCount >= Math.floor(expectedTabs * 0.7) || stitchedDataLines.length === 0) {
+      stitchedDataLines.push(line);
+    } else {
+      // Continuation — append to previous record
+      stitchedDataLines[stitchedDataLines.length - 1] += ' ' + line.trim();
+    }
+  });
+
+  const lines = [headerLine, ...stitchedDataLines].map(r => r.split('\t'));
   if (lines.length < 2) return { rows: [], errors: ['Need header + 1 row'] };
   const hdrs = lines[0].map(h => h.trim());
+  const expectedCols = hdrs.length;
+
+  // STEP 2: SAFETY NET — even after stitching, scan the WHOLE raw line for
+  // hard-delete status keywords. If "Cancelled" / "No Show" / "Out of Order" /
+  // "Deleted" / "Voided" appears anywhere in the row text, the row is dropped.
+  // This is intentionally aggressive: better to lose a "Cancellation Policy"
+  // false positive than to keep cancelled bookings on the breakfast list.
+  const HARD_DELETE_LINE_PATTERNS = [
+    /\bcancel(?:led|ed|lation)?\b/i,
+    /\bno[\s-]?show\b/i,
+    /\bdeleted?\b/i,
+    /\bvoid(?:ed)?\b/i,
+    /\bout[\s-]?of[\s-]?order\b/i,
+    /\bo\.?o\.?o\.?\b/i,
+  ];
+
+  // Detect column misalignment — for diagnostic only after stitching
+  let misalignedCount = 0;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].length < expectedCols) misalignedCount++;
+  }
 
   const cols = {
     id: findHeaderCol(hdrs, ["booking id", "reservation id", "ref", "confirmation"]),
@@ -1804,7 +1990,7 @@ function processSource(text, label) {
     adults: findHeaderCol(hdrs, ["number of adult", "no of adult", "adults", "adult"]),
     children: findHeaderCol(hdrs, ["number of child", "no of child", "children", "child"]),
     childAge: findHeaderCol(hdrs, ["child age", "kid age", "age"]),
-    status: findHeaderCol(hdrs, ["status", "state", "reservation status"]),
+    status: findHeaderCol(hdrs, ["reservation status", "booking status", "res status", "rsv status", "status"]),
     vip: findHeaderCol(hdrs, ["vip", "priority"]),
     rateCode: findHeaderCol(hdrs, ["rate code", "rate plan", "package"]),
     sharer: findHeaderCol(hdrs, ["sharer", "share with", "with guest", "companion"]),
@@ -1816,7 +2002,49 @@ function processSource(text, label) {
     return { rows: [], errors };
   }
 
+  // Diagnostic: track status field detection + filter decisions
+  const diag = {
+    statusColIndex: cols.status,
+    statusColName: cols.status === -1 ? '(NOT FOUND)' : hdrs[cols.status],
+    headers: hdrs,
+    headerLineIndex: headerIdx,
+    headerScore: bestScore,
+    expectedCols: expectedCols,
+    misalignedRows: misalignedCount,
+    statusValuesSeen: {},   // { "Cancelled": 3, "In House": 12, ... }
+    droppedRows: [],        // [{ name, room, status, reason }]
+    keptRows: 0,
+    sampleMisaligned: [],   // first few misaligned rows for diagnosis
+  };
+
+  // Capture sample of misaligned rows for diagnostic
+  for (let i = 1; i < lines.length && diag.sampleMisaligned.length < 3; i++) {
+    if (lines[i].length < expectedCols) {
+      diag.sampleMisaligned.push({
+        rowNum: i + 1,
+        gotCols: lines[i].length,
+        firstFew: lines[i].slice(0, 4).join(' | ').substring(0, 80)
+      });
+    }
+  }
+
   const rows = lines.slice(1).map((r, idx) => {
+    // SAFETY NET: Scan the full raw line text for status keywords.
+    // This catches "Cancelled" even if column alignment is off, or if the
+    // PMS uses a non-standard column for status.
+    const fullLineText = r.join(' | ');
+    const matchedLinePattern = HARD_DELETE_LINE_PATTERNS.find(p => p.test(fullLineText));
+    if (matchedLinePattern) {
+      diag.droppedRows.push({
+        row: idx + 2,
+        name: (cols.name !== -1 ? r[cols.name] : '').trim() || '(line scan)',
+        room: (cols.room !== -1 ? r[cols.room] : '').trim(),
+        status: '(line-scan match)',
+        matched: matchedLinePattern.source,
+      });
+      return null;
+    }
+
     let adults   = parseInt(r[cols.adults])   || 0;
     let children = cols.children !== -1 ? (parseInt(r[cols.children]) || 0) : 0;
     if (adults > 100) adults = 0;
@@ -1825,18 +2053,46 @@ function processSource(text, label) {
     const cin  = parseFlexDate(r[cols.checkin]);
     const cout = parseFlexDate(r[cols.checkout]);
     if (!cin || !cout) {
-      errors.push(`${label} row ${idx+2}: bad date`);
+      // Silently skip rows without valid dates. These are typically footer/summary
+      // rows from the PMS export (totals, payment notes, etc.) — not real bookings.
+      // Track in diag but don't surface as an error to the user.
+      diag.skippedNoDate = (diag.skippedNoDate || 0) + 1;
       return null;
     }
 
-    const status = (r[cols.status] || "").trim().toLowerCase();
-    // Exclude cancellations, no-shows, AND already-departed guests
-    // (Check-in/out Report may include historical departures that shouldn't be in breakfast list)
-    const departedStatuses = [
-      "cancelled","canceled","no-show","no show","void",
-      "checked out","checked-out","checkedout","departed","departure","out"
-    ];
-    if (departedStatuses.some(s => status === s || status.includes(s))) return null;
+    const statusRaw = cols.status !== -1 ? (r[cols.status] || "") : "";
+    const status = statusRaw.trim().toLowerCase();
+
+    // Track every status value we see (for diagnostics)
+    if (statusRaw.trim()) {
+      diag.statusValuesSeen[statusRaw.trim()] = (diag.statusValuesSeen[statusRaw.trim()] || 0) + 1;
+    }
+
+    // HARD DELETE — these bookings are removed from ALL processing.
+    // They will NOT appear in the breakfast list, NOT show R, NOT count in the forecast.
+    // Use substring match to catch variants like "Cancelled by Guest", "No-Show",
+    // "OOO - Maintenance", "CANCELLED " (trailing space), etc.
+    if (status) {
+      const HARD_DELETE_PATTERNS = [
+        "cancel",      // matches: cancelled, canceled, cancellation, cancel
+        "no show", "no-show", "noshow",
+        "deleted", "delete",
+        "void",
+        "out of order", "out-of-order", "ooo"
+      ];
+      const matchedPattern = HARD_DELETE_PATTERNS.find(p => status.includes(p));
+      if (matchedPattern) {
+        diag.droppedRows.push({
+          row: idx + 2,
+          name: (r[cols.name] || "").trim(),
+          room: (r[cols.room] || "").trim(),
+          status: statusRaw.trim(),
+          matched: matchedPattern,
+        });
+        return null;
+      }
+    }
+    diag.keptRows++;
 
     const isVIP = cols.vip !== -1 && (r[cols.vip] || "").trim().toLowerCase().match(/^(y|yes|true|1|vip)$/);
 
@@ -1856,7 +2112,7 @@ function processSource(text, label) {
     };
   }).filter(Boolean);
 
-  return { rows, errors };
+  return { rows, errors, diag };
 }
 
 function rowKey(g) {
@@ -1934,37 +2190,65 @@ function runEngine() {
   // two reports, or slightly different room formatting. We build multiple match keys
   // (by ID, and by room+name) so a guest counts as "checked in" if ANY key matches.
 
-  function matchKeys(g) {
-    const keys = [];
-    if (g.id) keys.push('id:' + g.id.toLowerCase().trim());
-    const room = (g.room || '').toLowerCase().trim();
-    const name = (g.name || '').toLowerCase().replace(/\s+/g, ' ').trim();
-    // room + name combo is the most reliable cross-report match
-    if (room && name && room !== 'tba') keys.push('rn:' + room + '|' + name);
-    // name + check-in date as a fallback (handles room reassignment)
-    if (name && g.checkin) keys.push('nd:' + name + '|' + g.checkin.getTime());
-    return keys;
+  // MATCHING RULE: Booking ID is the UNIQUE identifier.
+  // After check-in, the front desk may modify the guest name (e.g. from
+  // "LodgeLink" to the actual occupant), so room+name matching fails.
+  // Booking ID never changes between the two reports, so it is the only
+  // reliable cross-report match key.
+  function matchKey(g) {
+    const id = (g.id || '').toString().trim();
+    if (!id) return null;
+    return 'id:' + id;
   }
 
-  // Collect every match key that appears in Source A (checked-in guests)
-  const checkedInKeys = new Set();
-  A.rows.forEach(b => matchKeys(b).forEach(k => checkedInKeys.add(k)));
+  // SIMPLE RULE BASED ON SOURCE B STATUS:
+  // - status = "Reservation"  → reservation only, not yet checked in → show R
+  // - status = "In-House"     → currently in house → no R
+  // - status = "Checked-out"  → already departed → no R
+  // - other statuses          → treat as reservation (show R) by default
+  //
+  // We pull every guest's status directly from Source B. Source A is only
+  // used as a supplement for in-house guests whose original reservation
+  // might not appear in Source B (because Source B's date range is limited
+  // to ~14 days before/after today).
+
+  function isReservationStatus(s) {
+    const lower = (s || '').toLowerCase().trim();
+    // These statuses mean the guest has NOT physically arrived yet
+    return lower === 'reservation' || lower === 'confirmed' || lower === 'unconfirmed';
+  }
+  function isCheckedInStatus(s) {
+    const lower = (s || '').toLowerCase().trim();
+    return lower === 'in-house' || lower === 'in house' ||
+           lower === 'checked-out' || lower === 'checked out' || lower === 'checkedout' ||
+           lower === 'departure' || lower === 'arrival';
+  }
 
   const merged = new Map();
-  // Add reservations that are NOT yet checked in (only pure reservations get added from B).
-  // If a B-record matches something in A, skip it — the A version is the source of truth
-  // and will be added below as checked-in.
+  let fromA = 0, fromBOnly = 0;
+
+  // Track Source B guests by Booking ID so we can dedupe across sources
+  const bIds = new Set();
   B.rows.forEach(b => {
-    const isCheckedIn = matchKeys(b).some(k => checkedInKeys.has(k));
-    if (isCheckedIn) return;  // skip — will be added from Source A
-    b.checkedIn = false;      // pure reservation → show R
+    if (b.id) bIds.add(b.id.toString().trim());
+    // R is shown when status is reservation-like (or unknown — safer to flag)
+    b.checkedIn = isCheckedInStatus(b.status);
     merged.set(rowKey(b), b);
+    fromBOnly++;
   });
-  // Source A always wins and is always checked-in
+
+  // Source A: add only guests NOT already in Source B (handles long-stay
+  // guests whose original booking pre-dates Source B's date range).
   A.rows.forEach(b => {
-    b.checkedIn = true;
+    const id = (b.id || '').toString().trim();
+    if (id && bIds.has(id)) return;  // already covered by Source B
+    b.checkedIn = true;  // present in Source A but missing from B = long-stay in-house
     merged.set(rowKey(b), b);
+    fromA++;
   });
+
+  window.__lastMergeStats = { fromA, fromBOnly, total: merged.size };
+
   state.merged = Array.from(merged.values());
 
   // Count reserved-not-checked-in for status display
@@ -2000,7 +2284,7 @@ function renderRoster(list, totalEligible) {
     const msg = totalEligible === 0
       ? { t: 'No eligible guests', l: 'Nobody to serve breakfast for on this date' }
       : { t: 'No matches', l: 'Try a different search term' };
-    els.guestBody.innerHTML = `<tr><td colspan="6" class="empty-state">
+    els.guestBody.innerHTML = `<tr><td colspan="7" class="empty-state">
       <div class="empty-title">${msg.t}</div>
       <div class="empty-label">${msg.l}</div>
     </td></tr>`;
@@ -2033,6 +2317,8 @@ function renderRoster(list, totalEligible) {
       badges += ` <span class="status-tag reservation" title="Reserved — not yet checked in">R</span>`;
     }
 
+    const savedTogo = !!state.togo[k];
+
     tr.innerHTML = `
       <td class="sr-cell">${i + 1}</td>
       <td class="room-cell">${escapeHtml(g.room)}</td>
@@ -2049,6 +2335,12 @@ function renderRoster(list, totalEligible) {
                value="${escapeHtml(savedRemark)}"
                placeholder="—" autocomplete="off" spellcheck="false">
       </td>
+      <td class="togo-cell">
+        <label class="togo-label">
+          <input type="checkbox" class="togo-input" data-key="${escapeHtml(k)}" ${savedTogo ? 'checked' : ''}>
+          <span class="togo-box" aria-hidden="true"></span>
+        </label>
+      </td>
     `;
     frag.appendChild(tr);
   });
@@ -2063,6 +2355,20 @@ function renderRoster(list, totalEligible) {
       const cell = e.target.closest('.remarks-cell');
       if (cell) cell.classList.toggle('empty', !v);
     });
+  });
+
+  // Bind to-go checkboxes
+  els.guestBody.querySelectorAll('.togo-input').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const k = e.target.dataset.key;
+      if (e.target.checked) state.togo[k] = true;
+      else delete state.togo[k];
+      const cell = e.target.closest('.togo-cell');
+      if (cell) cell.classList.toggle('togo-active', e.target.checked);
+    });
+    // initial active state
+    const cell = input.closest('.togo-cell');
+    if (cell && input.checked) cell.classList.add('togo-active');
   });
 
   updateSummary(list.length, totalA, totalC);
@@ -2140,7 +2446,7 @@ function renderForecast(all, baseDate) {
 
 /* ----- Reset ----- */
 function resetUI() {
-  els.guestBody.innerHTML = `<tr><td colspan="6" class="empty-state">
+  els.guestBody.innerHTML = `<tr><td colspan="7" class="empty-state">
     <div class="empty-title">System standby</div>
     <div class="empty-label">Paste data above to begin</div>
   </td></tr>`;
@@ -2157,17 +2463,19 @@ function exportXLSX() {
   if (!state.filtered.length) return;
   const td = parseFlexDate(els.date.value) || new Date();
   const data = [
-    ['#','Room','Guest Name','Adults','Children','Remarks'],
+    ['#','Room','Guest Name','Adults','Children','Remarks','To-go'],
     ...state.filtered.map((g, i) => {
       let nm = g.sharer ? `${g.name} with ${g.sharer}` : g.name;
       if (g.isDayUse) nm += ' [Day Use]';
       if (g.checkedIn === false) nm += ' (R - not checked in)';
-      return [ i + 1, g.room, nm, g.adults, g.children, state.remarks[rowKey(g)] || '' ];
+      const k = rowKey(g);
+      return [ i + 1, g.room, nm, g.adults, g.children, state.remarks[k] || '', state.togo[k] ? 'Yes' : '' ];
     })
   ];
   const totA = state.filtered.reduce((s,g)=>s+g.adults,0);
   const totC = state.filtered.reduce((s,g)=>s+g.children,0);
-  data.push([], ['TOTAL','','', totA, totC, `Rooms: ${state.filtered.length}`]);
+  const togoCount = state.filtered.filter(g => state.togo[rowKey(g)]).length;
+  data.push([], ['TOTAL','','', totA, totC, `Rooms: ${state.filtered.length}`, `To-go: ${togoCount}`]);
   if (state.extraNotes) {
     data.push([], ['EXTRA NOTES'], [state.extraNotes]);
   }
@@ -2175,7 +2483,7 @@ function exportXLSX() {
   data.push([], [`POST-NIGHT-AUDIT: ${auditCount} guest(s) showed up after night audit before breakfast time`]);
 
   const ws = XLSX.utils.aoa_to_sheet(data);
-  ws['!cols'] = [{wch:5},{wch:10},{wch:36},{wch:8},{wch:8},{wch:40}];
+  ws['!cols'] = [{wch:5},{wch:10},{wch:36},{wch:8},{wch:8},{wch:40},{wch:8}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Breakfast');
   const fname = `breakfast_${td.toISOString().split('T')[0]}.xlsx`;
@@ -2212,6 +2520,7 @@ els.clearBtn.addEventListener('click', () => {
   els.inputA.value = ''; els.inputB.value = ''; els.search.value = '';
   els.extraNotes.value = '';
   state.remarks = {};
+  state.togo = {};
   state.extraNotes = '';
   $('extraNotesPrint').textContent = '';
   runEngine();
@@ -2231,56 +2540,108 @@ if (diagBtn) {
 
     let out = '';
     out += '═══ DIAGNOSTIC REPORT ═══\n\n';
-    out += `Source A (Check-in/out Report): ${A.rows.length} rows parsed\n`;
-    out += `Source B (Reservation Report): ${B.rows.length} rows parsed\n`;
+    out += `Source A (Check-in/out Report): ${A.rows.length} rows kept\n`;
+    out += `Source B (Reservation Report): ${B.rows.length} rows kept\n`;
     if (A.errors.length) out += `Source A errors: ${A.errors.join('; ')}\n`;
     if (B.errors.length) out += `Source B errors: ${B.errors.join('; ')}\n`;
     out += '\n';
 
-    out += '─── SOURCE A (first 5 rows) — these are treated as CHECKED IN ───\n';
-    A.rows.slice(0, 5).forEach((g, i) => {
-      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${g.id||'(none)'}" | in=${g.checkin?fmt(g.checkin):'?'} out=${g.checkout?fmt(g.checkout):'?'}\n`;
+    // === STATUS FIELD DIAGNOSTICS ===
+    out += '═══ STATUS FIELD DETECTION ═══\n';
+    [['A', A], ['B', B]].forEach(([label, src]) => {
+      if (!src.diag) return;
+      out += `\n[Source ${label}]\n`;
+      out += `  Header row found at line: ${src.diag.headerLineIndex + 1} (matched ${src.diag.headerScore} keywords)\n`;
+      out += `  Expected columns (from header): ${src.diag.expectedCols}\n`;
+      if (src.diag.misalignedRows > 0) {
+        out += `  🚨  MISALIGNED ROWS: ${src.diag.misalignedRows} row(s) have fewer columns than the header!\n`;
+        out += `      This means a field (address, email, etc.) contains a line break or tab\n`;
+        out += `      which is breaking the column alignment. Status filtering CANNOT work\n`;
+        out += `      reliably until the source data is cleaned.\n`;
+        src.diag.sampleMisaligned.forEach(s => {
+          out += `      row ${s.rowNum}: got ${s.gotCols} cols, starts with: ${s.firstFew}\n`;
+        });
+      } else {
+        out += `  ✓ All rows aligned correctly.\n`;
+      }
+      out += `  All column headers: ${JSON.stringify(src.diag.headers)}\n`;
+      out += `  Status column index: ${src.diag.statusColIndex} (${src.diag.statusColName})\n`;
+      if (src.diag.statusColIndex === -1) {
+        out += `  ⚠️  NO STATUS COLUMN FOUND in headers!\n`;
+      } else {
+        const seen = src.diag.statusValuesSeen;
+        const keys = Object.keys(seen);
+        out += `  Distinct status values seen (${keys.length}):\n`;
+        keys.forEach(k => {
+          out += `    "${k}" × ${seen[k]}\n`;
+        });
+      }
+      out += `  Dropped (hard-delete filter): ${src.diag.droppedRows.length} row(s)\n`;
+      if (src.diag.skippedNoDate) {
+        out += `  Skipped (no valid date — likely footer/total rows): ${src.diag.skippedNoDate} row(s)\n`;
+      }
+      src.diag.droppedRows.slice(0, 10).forEach(d => {
+        out += `    🗑  row ${d.row}: status="${d.status}" matched "${d.matched}" — ${d.name} (room ${d.room})\n`;
+      });
+      out += `  Kept: ${src.diag.keptRows} row(s)\n`;
     });
     out += '\n';
 
-    out += '─── SOURCE B (first 5 rows) — reservations ───\n';
-    B.rows.slice(0, 5).forEach((g, i) => {
-      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${g.id||'(none)'}" | in=${g.checkin?fmt(g.checkin):'?'} out=${g.checkout?fmt(g.checkout):'?'}\n`;
+    out += '─── SOURCE A — ALL ROWS (treated as CHECKED IN) ───\n';
+    A.rows.forEach((g, i) => {
+      const id = (g.id || '').toString().trim();
+      const key = id ? 'id:' + id : '(NO BOOKING ID!)';
+      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${id}" | KEY=${key}\n`;
     });
     out += '\n';
 
-    // Run match test
+    out += '─── SOURCE B — ALL ROWS (reservations) ───\n';
+    B.rows.forEach((g, i) => {
+      const id = (g.id || '').toString().trim();
+      const key = id ? 'id:' + id : '(NO BOOKING ID!)';
+      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${id}" | KEY=${key}\n`;
+    });
+    out += '\n';
+
+    // Run match test — uses BOOKING ID as unique identifier
+    // AND requires Source A check-in date to be today or earlier.
     function mk(g) {
-      const keys = [];
-      if (g.id) keys.push('id:' + g.id.toLowerCase().trim());
-      const room = (g.room || '').toLowerCase().trim();
-      const name = (g.name || '').toLowerCase().replace(/\s+/g, ' ').trim();
-      if (room && name && room !== 'tba') keys.push('rn:' + room + '|' + name);
-      if (name && g.checkin) keys.push('nd:' + name + '|' + g.checkin.getTime());
-      return keys;
+      const id = (g.id || '').toString().trim();
+      return id ? ['id:' + id] : [];
     }
+    const todayDiag = new Date();
+    todayDiag.setHours(0, 0, 0, 0);
     const ck = new Set();
-    A.rows.forEach(g => mk(g).forEach(k => ck.add(k)));
+    A.rows.forEach(g => {
+      if (!g.checkin || g.checkin.getTime() > todayDiag.getTime()) return;
+      mk(g).forEach(k => ck.add(k));
+    });
+
+    out += `─── CHECKED-IN BOOKING IDS (${ck.size} from Source A) ───\n`;
+    [...ck].forEach(k => { out += `  • ${k}\n`; });
+    out += '\n';
 
     out += '─── MATCH TEST: which B reservations are flagged R? ───\n';
-    let rCount = 0;
+    out += '(Rule: R is shown when Source B status is NOT "In-House" or "Checked-out")\n\n';
+    let rCount = 0, matchedCount = 0;
     B.rows.forEach((g) => {
-      const matched = mk(g).some(k => ck.has(k));
-      if (!matched) {
+      const lower = (g.status || '').toLowerCase().trim();
+      const isCheckedIn = (lower === 'in-house' || lower === 'in house' ||
+                          lower === 'checked-out' || lower === 'checked out' ||
+                          lower === 'checkedout' || lower === 'departure' || lower === 'arrival');
+      if (!isCheckedIn) {
         rCount++;
-        out += `🔴 R → Room=${g.room} Name="${g.name}" (NOT found in Source A)\n`;
+        out += `🔴 R → Room=${g.room} Name="${g.name}" Status="${g.status||'(empty)'}"\n`;
+      } else {
+        matchedCount++;
+        if (matchedCount <= 5) {
+          out += `✓    Room=${g.room} Name="${g.name}" Status="${g.status}" (in-house/checked-out)\n`;
+        }
       }
     });
-    if (rCount === 0) {
-      out += '⚠️  ZERO reservations flagged R.\n';
-      out += 'This means EVERY Source B guest was matched to a Source A entry.\n';
-      out += 'Likely cause: Source A also contains future reservations (not just checked-in guests),\n';
-      out += 'OR the two reports share booking IDs / room+name for everyone.\n';
-    } else {
-      out += `\n✓ ${rCount} reservation(s) would show R.\n`;
-      out += 'If you still do not see them in the list, those guests may not be\n';
-      out += 'eligible for breakfast on the selected date (check-in date is in the future).\n';
-    }
+    if (matchedCount > 5) out += `   ... and ${matchedCount - 5} more checked-in\n`;
+    out += `\n→ ${rCount} guest(s) flagged R, ${matchedCount} treated as already checked-in.\n`;
+    out += 'If a guest you expect to see R does not show, check their Source B Status value above.\n';
 
     panel.textContent = out;
   });
