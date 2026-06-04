@@ -1497,6 +1497,7 @@
         <div class="flex items-center gap-3 mb-2">
           <span class="t-caption" style="color: var(--accent);">VOL. XIII</span>
           <span class="t-caption">— F&B OPS UTILITY</span>
+          <span class="t-caption" style="color: var(--accent); margin-left: 8px; font-weight: 700;">BUILD 13.7 — REAL-DATE-OVERRIDE</span>
         </div>
         <h1 class="t-h1">
           Breakfast<span style="color: var(--accent);">.</span>Pro
@@ -2293,15 +2294,23 @@ function runEngine() {
   const merged = new Map();
   let fromA = 0, fromBOnly = 0;
 
-  // Build a map of Booking ID → actual room(s) from Source A.
-  // Source A's room field reflects the REAL current room (after any room
-  // moves), while Source B's room is the original reservation room and
-  // may be outdated.
-  const realRoomById = new Map();
+  // Build a map of Booking ID → actual data from Source A (room, dates,
+  // adults, children). Source A reflects the REAL current state:
+  // - room: actual current room (after any room moves)
+  // - check-in/check-out: actual stay dates (after any extensions)
+  // - adults/children: actual headcount (after any changes at front desk)
+  // Source B is the original reservation and may be outdated.
+  const realDataById = new Map();
   A.rows.forEach(a => {
     if (a.id) {
       const id = a.id.toString().trim();
-      if (a.room && a.room.trim()) realRoomById.set(id, a.room.trim());
+      realDataById.set(id, {
+        room: a.room && a.room.trim() ? a.room.trim() : null,
+        checkin: a.checkin || null,
+        checkout: a.checkout || null,
+        adults: a.adults,
+        children: a.children,
+      });
     }
   });
 
@@ -2311,12 +2320,16 @@ function runEngine() {
     if (b.id) bIds.add(b.id.toString().trim());
     // R is shown when status is reservation-like (or unknown — safer to flag)
     b.checkedIn = isCheckedInStatus(b.status);
-    // OVERRIDE: if Source A has a different room for this booking (room move),
-    // use the Source A version. This handles the "102 moved to 116" case.
+    // OVERRIDE with Source A's real data (room moves, stay extensions, etc.)
     if (b.id) {
-      const realRoom = realRoomById.get(b.id.toString().trim());
-      if (realRoom && realRoom !== b.room) {
-        b.room = realRoom;
+      const real = realDataById.get(b.id.toString().trim());
+      if (real) {
+        if (real.room && real.room !== b.room) b.room = real.room;
+        if (real.checkin) b.checkin = real.checkin;
+        if (real.checkout) b.checkout = real.checkout;
+        // Keep adults/children from B unless A has different values
+        if (real.adults !== undefined && real.adults !== null) b.adults = real.adults;
+        if (real.children !== undefined && real.children !== null) b.children = real.children;
       }
     }
     merged.set(rowKey(b), b);
@@ -2713,7 +2726,9 @@ if (diagBtn) {
     A.rows.forEach((g, i) => {
       const id = (g.id || '').toString().trim();
       const key = id ? 'id:' + id : '(NO BOOKING ID!)';
-      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${id}" | KEY=${key}\n`;
+      const ci = g.checkin ? fmt(g.checkin) : '?';
+      const co = g.checkout ? fmt(g.checkout) : '?';
+      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${id}" | in=${ci} out=${co}\n`;
     });
     out += '\n';
 
@@ -2721,7 +2736,9 @@ if (diagBtn) {
     B.rows.forEach((g, i) => {
       const id = (g.id || '').toString().trim();
       const key = id ? 'id:' + id : '(NO BOOKING ID!)';
-      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${id}" | KEY=${key}\n`;
+      const ci = g.checkin ? fmt(g.checkin) : '?';
+      const co = g.checkout ? fmt(g.checkout) : '?';
+      out += `${i+1}. Room=${g.room} | Name="${g.name}" | ID="${id}" | in=${ci} out=${co}\n`;
     });
     out += '\n';
 
@@ -2764,6 +2781,25 @@ if (diagBtn) {
     if (matchedCount > 5) out += `   ... and ${matchedCount - 5} more checked-in\n`;
     out += `\n→ ${rCount} guest(s) flagged R, ${matchedCount} treated as already checked-in.\n`;
     out += 'If a guest you expect to see R does not show, check their Source B Status value above.\n';
+
+    // === FINAL OUTPUT: state.merged and state.filtered ===
+    out += '\n─── FINAL state.merged (after merging A + B, before eligibility) ───\n';
+    if (state.merged && state.merged.length) {
+      out += `Total: ${state.merged.length} guests\n`;
+      const targetDate = parseFlexDate(els.date.value);
+      const targetTime = targetDate ? targetDate.getTime() : 0;
+      state.merged.forEach((g, i) => {
+        const ci = g.checkin ? fmt(g.checkin) : '?';
+        const co = g.checkout ? fmt(g.checkout) : '?';
+        const eligible = targetDate && g.checkin && g.checkout &&
+          (g.isDayUse ? targetTime === g.checkin.getTime() :
+            (targetTime > g.checkin.getTime() && targetTime <= g.checkout.getTime()));
+        const tag = eligible ? '✓ ELIGIBLE' : '✗ skipped';
+        out += `${i+1}. ${tag} | Room=${g.room} | ${g.name} | ID=${g.id||''} | in=${ci} out=${co}\n`;
+      });
+    } else {
+      out += '(empty — run Recalculate first to populate)\n';
+    }
 
     panel.textContent = out;
   });
